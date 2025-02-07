@@ -1,6 +1,6 @@
-import { deleteUserService } from '../../service/user/delete.user.service.js';
+import deleteUserService from "../../service/user/delete.user.service.js";
 
-export const deleteUser = async (req, res) => {
+const deleteUser = async (req, res) => {
   try {
     await deleteUserService(req.params.id);
     res.status(200).json({ message: 'User deleted successfully' });
@@ -8,3 +8,5 @@ export const deleteUser = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export default deleteUser;

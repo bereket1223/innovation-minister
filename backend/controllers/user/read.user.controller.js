@@ -1,6 +1,6 @@
-import  { readUserService } from '../../service/user/read.user.service.js';
+import readUserService from '../../service/user/read.user.service.js';
 
-export const readUsers = async (req, res) => {
+const readUsers = async (req, res) => {
   try {
     const users = await readUserService();
     res.status(200).json(users);
@@ -8,3 +8,5 @@ export const readUsers = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export default readUsers;

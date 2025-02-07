@@ -1,6 +1,6 @@
-import { createDepartmentService } from '../../service/department/create.department.service.js';
+import createDepartmentService from '../../service/department/create.department.service.js';
 
-export const createDepartment = async (req, res) => {
+const createDepartment = async (req, res) => {
   try {
     const department = await createDepartmentService(req.body);
     res.status(201).json(department);
@@ -8,3 +8,5 @@ export const createDepartment = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export default createDepartment;

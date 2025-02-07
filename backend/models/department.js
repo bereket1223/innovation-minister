@@ -3,70 +3,70 @@ import mongoose from 'mongoose';
 const UserSchema = new mongoose.Schema({
   fullName: { 
     type: String, 
-    required: true
+   // required: true
  },
   gender:{
      type: String, 
      enum: ['Male', 'Female'],
-      required: true
+     // required: true
      },
   age:{ 
     type: Number,
-     required: true
+    // required: true
      },
   country: { 
     type: String,
-     required: true 
+     //required: true 
     },
   nationality: { 
     type: String, 
-    required: true
+    //required: true
  },
   region: { 
     type: String,
-     required: true
+   //  required: true
      },
   zone: { 
     type: String,
-     required: true
+     //required: true
      },
   woreda: {
      type: String, 
-     required: true 
+    // required: true 
     },
   kebele: {
      type: String,
-      required: true 
+     // required: true 
     },
   email: { 
     type: String, 
-    required: true, 
-    unique: true 
+   // required: true, 
+   // unique: true 
 },
   phone: { 
     type: String, 
-    required: true
+    //required: true
  },
   department: { 
     type: String,
-     required: true
+     //required: true
      },
   categories: {
      type: String,
-      required: true 
+    //  required: true 
     },
   title: {
      type: String, 
-     required: true 
+     //required: true 
     },
   patent: { 
     type: String, 
     enum: ['Yes', 'No'], 
-    required: true
+  //  required: true
  },
   description: {
      type: String,
-      required: true
+     // required: true
      },
   file: {
      type: String,
@@ -78,6 +78,6 @@ const UserSchema = new mongoose.Schema({
 
 });
 
-const User = mongoose.model('User', UserSchema);
+const User = mongoose.model('department', UserSchema);
 
 export default User;

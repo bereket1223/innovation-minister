@@ -1,6 +1,6 @@
-import { deleteDepartmentService } from '../../service/department/delete.department.service.js';
+import deleteDepartmentService from '../../service/department/delete.department.service.js';
 
-export const deleteDepartment = async (req, res) => {
+const deleteDepartment = async (req, res) => {
   try {
     await deleteDepartmentService(req.params.id);
     res.status(200).json({ message: 'Department deleted successfully' });
@@ -8,3 +8,5 @@ export const deleteDepartment = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export default deleteDepartment;
