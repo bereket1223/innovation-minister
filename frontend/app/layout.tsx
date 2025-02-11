@@ -1,18 +1,15 @@
+import type { Metadata } from "next"
+import { Inter } from "next/font/google"
 import "./globals.css"
-import { Poppins } from "next/font/google"
-import Navbar from "@/components/Navbar"
-import Footer from "@/components/Footer"
+import Navbar from "./components/Navbar"
 import type React from "react" // Added import for React
 
-const poppins = Poppins({
-  weight: ["400", "600", "700"],
-  subsets: ["latin"],
-  display: "swap",
-})
+const inter = Inter({ subsets: ["latin"] })
 
-export const metadata = {
-  title: "My Website",
-  description: "A multi-page website with React and Tailwind CSS",
+export const metadata: Metadata = {
+  title: "Your Website",
+  description: "A website with home, services, and blog",
+    generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -22,12 +19,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={poppins.className}>
+      <body className={inter.className}>
         <Navbar />
         <main>{children}</main>
-        <Footer />
       </body>
     </html>
   )
 }
 
+
+
+import './globals.css'
