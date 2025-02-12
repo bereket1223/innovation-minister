@@ -1,27 +1,82 @@
+import Image from "next/image";
 import Link from "next/link";
-import h2 from "../../public/h2.jpg"
-export default function LandingSection() {
+import TestimonialCart from "../components/TestimonialCart";
+import ServicesSection from "./ServicesSection";
+
+export default function Home() {
   return (
-    <section
-      className="bg-cover bg-center bg-no-repeat"
-      style={{ backgroundImage: `url(${h2})` }}
-    >
-      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8 bg-black bg-opacity-50 rounded-lg">
-        <h1 className="text-4xl font-extrabold text-white sm:text-5xl md:text-6xl">
-          Welcome to Our Website
-        </h1>
-        <p className="mt-6 text-xl text-gray-200 max-w-3xl">
-          We provide amazing services and share insightful blog posts. Explore our website to learn more!
-        </p>
-        <div className="mt-10">
+    <div>
+      {/* Hero Section */}
+      <section className="relative h-[70vh] flex items-center justify-center text-background">
+        <Image src="/hero-background.jpg" alt="Hero Background" layout="fill" objectFit="cover" quality={100} />
+        <div className="absolute inset-0 bg-black opacity-50"></div>
+        <div className="z-10 text-center px-4 sm:px-8">
+          <h1 className="text-5xl sm:text-6xl font-bold mb-4 text-blue-500">Welcome to My Website</h1>
+          <p className="text-xl sm:text-2xl mb-8 text-white">Discover amazing services and content</p>
           <Link
-            href="/#services"
-            className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+            href="#about"
+            className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-black transition duration-300"
           >
-            Explore Our Services
+            Learn More
           </Link>
         </div>
-      </div>
-    </section>
+      </section>
+
+      {/* About Section */}
+      <section id="about" className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <h2 className="text-4xl font-bold text-center mb-8 text-blue-500">About Us</h2>
+          <div className="flex flex-wrap items-center">
+            <div className="w-full md:w-1/2 mb-8 md:mb-0">
+              <Image src="/about-image.jpg" alt="About Us" width={500} height={300} className="rounded-lg shadow-lg" />
+            </div>
+            <div className="w-full md:w-1/2 md:pl-8">
+              <p className="text-lg mb-4 text-black">
+                We are a passionate team dedicated to providing exceptional services and valuable content to our
+                customers. Our mission is to empower individuals and businesses with innovative solutions.
+              </p>
+              <p className="text-lg text-black">
+                With years of experience and a commitment to excellence, we strive to exceed expectations and deliver
+                results that matter.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Services Section */}
+      <section id="services" className="py-20 bg-gray-100">
+        <div className="container mx-auto px-4">
+          <h2 className="text-4xl font-bold text-center mb-8 text-blue-500">Our Legacy</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {["Web Development", "Mobile Apps", "UI/UX Design"].map((service, index) => (
+              <div key={index} className="bg-white p-6 rounded-lg shadow-md transition-transform transform hover:scale-105 duration-300">
+                <h3 className="text-2xl font-bold mb-4 text-blue-500">{service}</h3>
+                <p className="text-lg mb-4 text-black">
+                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean euismod bibendum laoreet.
+                </p>
+                <Link href="#" className="text-blue-500 font-bold hover:underline">
+                  Learn More
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Services Section (Custom Component) */}
+      <ServicesSection />
+
+      {/* Testimonial Cart Section */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-4xl font-bold text-center mb-8 text-blue-500">What Our Clients Say</h2>
+            <TestimonialCart />
+          </div>
+        </div>
+      </section>
+
+    </div>
   );
 }

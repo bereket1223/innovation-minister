@@ -1,12 +1,12 @@
-import LandingSection from "./components/LandingSection"
-import ServicesSection from "./components/ServicesSection"
+import LandingSection from "./components/LandingSection";
+import Footer from "../app/components/Footer";
 
 export default function Home() {
   return (
-    <div>
+    <div className="w-full">
       <LandingSection />
-      <ServicesSection />
+      <Footer />
     </div>
-  )
+  );
 }
 

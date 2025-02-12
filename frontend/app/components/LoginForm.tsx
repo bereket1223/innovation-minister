@@ -1,7 +1,8 @@
-"use client"
+'use client'
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 export default function LoginForm() {
   const [email, setEmail] = useState("")
@@ -54,7 +55,13 @@ export default function LoginForm() {
       >
         Log In
       </button>
+
+      <p className="mt-4 text-center text-black">
+        Don't have an account?{" "}
+        <Link href="/signup" className="text-blue-600 hover:underline">
+          Sign Up
+        </Link>
+      </p>
     </form>
   )
 }
-
