@@ -1,23 +1,45 @@
 import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import connectDB from './utils/db.js';
 import userRoutes from './routes/user.api.js';
 import departmentRoutes from './routes/department.api.js';
-import connectDB from "./utils/db.js";
-import dotenv from 'dotenv';
-
 
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Database Connection
+connectDB();
+
+// ✅ Allow frontend requests from port 3000
+app.use(cors({
+  origin: 'http://localhost:3000',
+  methods: 'GET,POST,PUT,DELETE',
+  credentials: true
+}));
+
+// Middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-app.use('/api/users', userRoutes);
-app.use('/api/departments', departmentRoutes);
+// Routes
+app.use('/api/user', userRoutes);
+app.use('/api/department', departmentRoutes);
 
+// Error Handling Middleware
+app.use((err, req, res, next) => {
+  console.error("Error:", err.message);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "Internal Server Error",
+  });
+});
 
-app.listen(PORT,()=>{
-  connectDB();
-  console.log(`Server running at port ${PORT}`);
-})
+// Start Server
+app.listen(PORT, () => {
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
+});
 
 export default app;
+
