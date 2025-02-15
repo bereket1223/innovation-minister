@@ -15,7 +15,7 @@ export default function LoginForm() {
     if (email === "user@example.com" && password === "password") {
       // In a real application, you would set the authentication state here
       console.log("Login successful")
-      router.push("/dashboard")
+      router.push("/admin")
     } else {
       alert("Invalid credentials. Please try again.")
     }
