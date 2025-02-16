@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -11,23 +11,35 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useRouter } from "next/navigation"
-import { FaUserCircle } from "react-icons/fa"  // Import the icon from react-icons"
-import { useState } from "react"  // Import useState for state management
+import { FaUserCircle } from "react-icons/fa"
+import { useState } from "react"
+import toast from "react-hot-toast"
 
 export default function ProfileDropdown() {
   const router = useRouter()
-
-  // State to manage whether the menu is open or not
   const [isOpen, setIsOpen] = useState(false)
 
-  const handleLogout = () => {
-    // In a real app, you would handle the logout process here
-    console.log("Logging out...")
-    router.push("/login")
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/api/user/logout", {
+        method: "POST",
+        credentials: "include",
+      })
+
+      if (response.ok) {
+        toast.success("Logged out successfully")
+        router.push("/login")
+      } else {
+        const data = await response.json()
+        toast.error(data.message || "Logout failed. Please try again.")
+      }
+    } catch (error) {
+      console.error("Logout error:", error)
+      toast.error("An error occurred during logout. Please try again.")
+    }
   }
 
   const toggleMenu = () => {
-    // Toggle the menu open or close
     setIsOpen(!isOpen)
   }
 
@@ -35,14 +47,13 @@ export default function ProfileDropdown() {
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative p-0" onClick={toggleMenu}>
-          {/* Replace Avatar with the icon */}
           <div className="h-8 w-8 rounded-full flex items-center justify-center bg-gray-200">
-            <FaUserCircle className="text-gray-500" size={32} />  {/* Profile icon */}
+            <FaUserCircle className="text-gray-500" size={32} />
           </div>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className={`w-56 ${isOpen ? 'bg-white' : ''} transition-all duration-300`} // Adds white background when open
+        className={`w-56 ${isOpen ? "bg-white" : ""} transition-all duration-300`}
         align="end"
         forceMount
       >
@@ -64,3 +75,4 @@ export default function ProfileDropdown() {
     </DropdownMenu>
   )
 }
+

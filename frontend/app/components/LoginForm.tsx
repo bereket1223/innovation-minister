@@ -7,7 +7,7 @@ import Link from "next/link"
 import toast from "react-hot-toast"
 
 export default function LoginForm() {
-  const [phoneNumber, setPhoneNumber] = useState("")
+  const [phone, setphone] = useState("")
   const [password, setPassword] = useState("")
   const router = useRouter()
 
@@ -19,13 +19,13 @@ export default function LoginForm() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ phoneNumber, password }),
+        body: JSON.stringify({ phone, password }),
         credentials: "include", // This is important for cookies
       })
 
       if (response.ok) {
         toast.success("Login successful!")
-        router.push("/admin")
+        router.push("/dashboard")
       } else {
         const data = await response.json()
         toast.error(data.message || "Login failed. Please try again.")
@@ -38,14 +38,14 @@ export default function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
           Phone Number
         </label>
         <input
           type="tel"
-          id="phoneNumber"
-          value={phoneNumber}
-          onChange={(e) => setPhoneNumber(e.target.value)}
+          id="phone"
+          value={phone}
+          onChange={(e) => setphone(e.target.value)}
           required
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
           placeholder="e.g., +1234567890"
