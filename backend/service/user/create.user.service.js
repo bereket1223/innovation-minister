@@ -1,19 +1,31 @@
-import User from "../../models/User.js";
-import bcrypt from "bcrypt";
+import User from "../../models/user.js"
+import bcrypt from "bcrypt"
+export const createUser = async (userData) => {
+  const { fullName, email, phone, password, profilePictureUrl } = userData
 
-const createUserService = async ({ fullName, email, phone, password, profilePicture }) => {
-  const hashedPassword = await bcrypt.hash(password, 10);
+  // Check if user already exists by email or phone
+  const existingUserByEmail = await User.findOne({ email })
+  if (existingUserByEmail) {
+    throw new Error("User with this email already exists")
+  }
 
-  const user = new User({
+  const existingUserByPhone = await User.findOne({ phone })
+  if (existingUserByPhone) {
+    throw new Error("User with this phone number already exists")
+  }
+
+  // Hash the password
+  const saltRounds = 10
+  const hashedPassword = await bcrypt.hash(password, saltRounds)
+
+  // Create new user
+  const newUser = new User({
     fullName,
     email,
     phone,
     password: hashedPassword,
-    profilePicture, // Store Cloudinary URL
-  });
+    profilePictureUrl,
+  })
 
-  await user.save();
-  return user;
-};
-
-export default createUserService;
+  return newUser.save()
+}

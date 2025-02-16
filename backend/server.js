@@ -4,15 +4,15 @@ import dotenv from 'dotenv';
 import connectDB from './utils/db.js';
 import userRoutes from './routes/user.api.js';
 import departmentRoutes from './routes/department.api.js';
+import cookieParser from "cookie-parser"
 
 dotenv.config();
 const app = express();
+app.use(cookieParser())
 const PORT = process.env.PORT || 5000;
 
-// Database Connection
 connectDB();
 
-// ✅ Allow frontend requests from port 3000
 app.use(cors({
   origin: 'http://localhost:3000',
   methods: 'GET,POST,PUT,DELETE',

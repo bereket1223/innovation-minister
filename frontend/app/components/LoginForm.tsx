@@ -1,39 +1,54 @@
-'use client'
+"use client"
 
+import type React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import toast from "react-hot-toast"
 
 export default function LoginForm() {
-  const [email, setEmail] = useState("")
+  const [phoneNumber, setPhoneNumber] = useState("")
   const [password, setPassword] = useState("")
   const router = useRouter()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Mock login process
-    if (email === "user@example.com" && password === "password") {
-      // In a real application, you would set the authentication state here
-      console.log("Login successful")
-      router.push("/admin")
-    } else {
-      alert("Invalid credentials. Please try again.")
+    try {
+      const response = await fetch("http://localhost:5000/api/user/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ phoneNumber, password }),
+        credentials: "include", // This is important for cookies
+      })
+
+      if (response.ok) {
+        toast.success("Login successful!")
+        router.push("/admin")
+      } else {
+        const data = await response.json()
+        toast.error(data.message || "Login failed. Please try again.")
+      }
+    } catch (error) {
+      toast.error("An error occurred. Please try again.")
     }
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-          Email
+        <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700">
+          Phone Number
         </label>
         <input
-          type="email"
-          id="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          type="tel"
+          id="phoneNumber"
+          value={phoneNumber}
+          onChange={(e) => setPhoneNumber(e.target.value)}
           required
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+          placeholder="e.g., +1234567890"
         />
       </div>
       <div>
@@ -65,3 +80,4 @@ export default function LoginForm() {
     </form>
   )
 }
+
