@@ -1,11 +1,40 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import type React from "react"
 
-export default function FormPage() {
-  const router = useRouter()
-  const [formData, setFormData] = useState({
+import { useState, useCallback } from "react"
+import { useRouter } from "next/navigation"
+import { X } from "lucide-react"
+
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Checkbox } from "@/components/ui/checkbox"
+
+interface FormData {
+  fullName: string
+  gender: string
+  age: string
+  country: string
+  nationality: string
+  region: string
+  zone: string
+  woreda: string
+  kebele: string
+  emailOrPhone: string
+  department: string
+  categories: string
+  title: string
+  patent: string
+  description: string
+  agreement: boolean
+}
+
+export default function DepartmentForm() {
+  const [formData, setFormData] = useState<FormData>({
     fullName: "",
     gender: "",
     age: "",
@@ -15,323 +44,276 @@ export default function FormPage() {
     zone: "",
     woreda: "",
     kebele: "",
-    email: "",
-    phone: "",
+    emailOrPhone: "",
     department: "",
     categories: "",
     title: "",
     patent: "",
     description: "",
-    file: null,
+    agreement: false,
   })
+  const [file, setFile] = useState<File | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }))
-  }
+  const router = useRouter()
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+      const { name, value } = e.target
+      setFormData((prev) => ({ ...prev, [name]: value }))
+    },
+    [],
+  )
+
+  const handleCheckboxChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target
+    setFormData((prev) => ({ ...prev, [name]: checked }))
+  }, [])
+
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setFormData((prevData) => ({
-        ...prevData,
-        file: e.target.files ? e.target.files[0] : null,
-      }))
+      setFile(e.target.files[0])
     }
-  }
+  }, [])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Form submitted:", formData)
-    // Here you would typically send the data to your server
-    // After submission, redirect to a success page
-    router.push("/form-success")
+    setError(null)
+    setSuccess(null)
+    setIsLoading(true)
+
+    const submitData = new FormData()
+    Object.entries(formData).forEach(([key, value]) => {
+      submitData.append(key, value.toString())
+    })
+    if (file) {
+      submitData.append("file", file)
+    }
+
+    try {
+      const response = await fetch("http://localhost:5000/api/department/createDepartment", {
+        method: "POST",
+        body: submitData,
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        console.log("Department created:", data)
+        setSuccess("Successfully submitted! Redirecting...")
+        setTimeout(() => router.push("/departments"), 2000)
+      } else {
+        const errorData = await response.json()
+        setError(errorData.message || "An error occurred during submission.")
+      }
+    } catch (error) {
+      console.error("Network error:", error)
+      setError("A network error occurred. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6 text-blue text-center">Submission Form</h1>
-      <form onSubmit={handleSubmit} className="max-w-2xl mx-auto bg-white shadow-md rounded-lg p-8">
+      <h1 className="text-3xl font-bold mb-6 text-primary text-center">Department Form</h1>
+      <form onSubmit={handleSubmit} className="max-w-2xl mx-auto bg-card shadow-md rounded-lg p-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
-              Full Name
-            </label>
-            <input
-              type="text"
-              id="fullName"
-              name="fullName"
-              value={formData.fullName}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+          <div className="space-y-2">
+            <Label htmlFor="fullName">Full Name</Label>
+            <Input id="fullName" name="fullName" value={formData.fullName} onChange={handleChange} required />
           </div>
 
-          <div>
-            <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">
-              Gender
-            </label>
-            <select
-              id="gender"
+          <div className="space-y-2">
+            <Label htmlFor="gender">Gender</Label>
+            <Select
               name="gender"
               value={formData.gender}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onValueChange={(value) => setFormData((prev) => ({ ...prev, gender: value }))}
             >
-              <option value="">Select gender</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-            </select>
+              <SelectTrigger>
+                <SelectValue placeholder="Select gender" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Male">Male</SelectItem>
+                <SelectItem value="Female">Female</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          <div>
-            <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-1">
-              Age
-            </label>
-            <input
-              type="number"
-              id="age"
-              name="age"
-              value={formData.age}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+          <div className="space-y-2">
+            <Label htmlFor="age">Age</Label>
+            <Input type="number" id="age" name="age" value={formData.age} onChange={handleChange} required />
           </div>
 
-          <div>
-            <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
-              Country
-            </label>
-            <input
-              type="text"
-              id="country"
-              name="country"
-              value={formData.country}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+          <div className="space-y-2">
+            <Label htmlFor="country">Country</Label>
+            <Input id="country" name="country" value={formData.country} onChange={handleChange} required />
           </div>
 
-          <div>
-            <label htmlFor="nationality" className="block text-sm font-medium text-gray-700 mb-1">
-              Nationality
-            </label>
-            <input
-              type="text"
-              id="nationality"
-              name="nationality"
-              value={formData.nationality}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+          <div className="space-y-2">
+            <Label htmlFor="nationality">Nationality</Label>
+            <Input id="nationality" name="nationality" value={formData.nationality} onChange={handleChange} required />
           </div>
 
-          <div>
-            <label htmlFor="region" className="block text-sm font-medium text-gray-700 mb-1">
-              Region
-            </label>
-            <select
-              id="region"
+          <div className="space-y-2">
+            <Label htmlFor="region">Region</Label>
+            <Select
               name="region"
               value={formData.region}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onValueChange={(value) => setFormData((prev) => ({ ...prev, region: value }))}
             >
-              <option value="">Select region</option>
-              {/* Add 12 options here */}
-            </select>
+              <SelectTrigger>
+                <SelectValue placeholder="Select region" />
+              </SelectTrigger>
+              <SelectContent>
+                {/* Add 12 options here */}
+                <SelectItem value="region1">Region 1</SelectItem>
+                <SelectItem value="region2">Region 2</SelectItem>
+                {/* ... */}
+              </SelectContent>
+            </Select>
           </div>
 
-          <div>
-            <label htmlFor="zone" className="block text-sm font-medium text-gray-700 mb-1">
-              Zone
-            </label>
-            <input
-              type="text"
-              id="zone"
-              name="zone"
-              value={formData.zone}
+          <div className="space-y-2">
+            <Label htmlFor="zone">Zone</Label>
+            <Input id="zone" name="zone" value={formData.zone} onChange={handleChange} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="woreda">Woreda</Label>
+            <Input id="woreda" name="woreda" value={formData.woreda} onChange={handleChange} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="kebele">Kebele</Label>
+            <Input id="kebele" name="kebele" value={formData.kebele} onChange={handleChange} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="emailOrPhone">Email or Phone</Label>
+            <Input
+              id="emailOrPhone"
+              name="emailOrPhone"
+              value={formData.emailOrPhone}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter email or phone number"
+              required
             />
           </div>
 
-          <div>
-            <label htmlFor="woreda" className="block text-sm font-medium text-gray-700 mb-1">
-              Woreda
-            </label>
-            <input
-              type="text"
-              id="woreda"
-              name="woreda"
-              value={formData.woreda}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+          <div className="space-y-2">
+            <Label>Department</Label>
+            <RadioGroup
+              name="department"
+              value={formData.department}
+              onValueChange={(value) => setFormData((prev) => ({ ...prev, department: value }))}
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Indigenous research" id="indigenous-research" />
+                <Label htmlFor="indigenous-research">Indigenous research</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Indigenous technology" id="indigenous-technology" />
+                <Label htmlFor="indigenous-technology">Indigenous technology</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Indigenous innovations" id="indigenous-innovations" />
+                <Label htmlFor="indigenous-innovations">Indigenous innovations</Label>
+              </div>
+            </RadioGroup>
           </div>
 
-          <div>
-            <label htmlFor="kebele" className="block text-sm font-medium text-gray-700 mb-1">
-              Kebele
-            </label>
-            <input
-              type="text"
-              id="kebele"
-              name="kebele"
-              value={formData.kebele}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-              Phone
-            </label>
-            <input
-              type="tel"
-              id="phone"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-            <div className="space-y-2">
-              <label className="inline-flex items-center">
-                <input
-                  type="radio"
-                  name="department"
-                  value="option1"
-                  onChange={handleChange}
-                  className="form-radio text-blue-500"
-                />
-                <span className="ml-2">Option 1</span>
-              </label>
-              <label className="inline-flex items-center">
-                <input
-                  type="radio"
-                  name="department"
-                  value="option2"
-                  onChange={handleChange}
-                  className="form-radio text-blue-500"
-                />
-                <span className="ml-2">Option 2</span>
-              </label>
-              <label className="inline-flex items-center">
-                <input
-                  type="radio"
-                  name="department"
-                  value="option3"
-                  onChange={handleChange}
-                  className="form-radio text-blue-500"
-                />
-                <span className="ml-2">Option 3</span>
-              </label>
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="categories" className="block text-sm font-medium text-gray-700 mb-1">
-              Categories
-            </label>
-            <select
-              id="categories"
+          <div className="space-y-2">
+            <Label htmlFor="categories">Categories</Label>
+            <Select
               name="categories"
               value={formData.categories}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onValueChange={(value) => setFormData((prev) => ({ ...prev, categories: value }))}
             >
-              <option value="">Select category</option>
-              {/* Add 13 options here */}
-            </select>
+              <SelectTrigger>
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                {/* Add 13 options here */}
+                <SelectItem value="category1">Category 1</SelectItem>
+                <SelectItem value="category2">Category 2</SelectItem>
+                {/* ... */}
+              </SelectContent>
+            </Select>
           </div>
 
-          <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-              Title
-            </label>
-            <input
-              type="text"
-              id="title"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+          <div className="space-y-2">
+            <Label htmlFor="title">Title</Label>
+            <Input id="title" name="title" value={formData.title} onChange={handleChange} required />
           </div>
 
-          <div>
-            <label htmlFor="patent" className="block text-sm font-medium text-gray-700 mb-1">
-              Patent
-            </label>
-            <select
-              id="patent"
+          <div className="space-y-2">
+            <Label htmlFor="patent">Patent</Label>
+            <Select
               name="patent"
               value={formData.patent}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onValueChange={(value) => setFormData((prev) => ({ ...prev, patent: value }))}
             >
-              <option value="">Select option</option>
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
-            </select>
+              <SelectTrigger>
+                <SelectValue placeholder="Select option" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Yes">Yes</SelectItem>
+                <SelectItem value="No">No</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
-        <div className="mt-6">
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-            Description
-          </label>
-          <textarea
+        <div className="mt-6 space-y-2">
+          <Label htmlFor="description">Description</Label>
+          <Textarea
             id="description"
             name="description"
             value={formData.description}
             onChange={handleChange}
             rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          ></textarea>
-        </div>
-
-        <div className="mt-6">
-          <label htmlFor="file" className="block text-sm font-medium text-gray-700 mb-1">
-            File
-          </label>
-          <input
-            type="file"
-            id="file"
-            name="file"
-            onChange={handleFileChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
           />
         </div>
 
+        <div className="mt-6 space-y-2">
+          <Label htmlFor="file">File</Label>
+          <Input type="file" id="file" name="file" onChange={handleFileChange} />
+        </div>
+
+        <div className="mt-6 items-top flex space-x-2">
+          <Checkbox
+            id="agreement"
+            name="agreement"
+            checked={formData.agreement}
+            onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, agreement: checked as boolean }))}
+          />
+          <div className="grid gap-1.5 leading-none">
+            <label
+              htmlFor="agreement"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              I agree to the terms and conditions
+            </label>
+          </div>
+        </div>
+
+        {error && (
+          <div className="mt-4 bg-destructive/15 text-destructive text-sm p-3 rounded-md flex items-center">
+            <X className="h-4 w-4 mr-2" />
+            {error}
+          </div>
+        )}
+
+        {success && <div className="mt-4 bg-green-100 text-green-800 text-sm p-3 rounded-md">{success}</div>}
+
         <div className="mt-8">
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-md hover:bg-blue-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            Submit
-          </button>
+          <Button type="submit" className="w-full" disabled={!formData.agreement || isLoading}>
+            {isLoading ? "Submitting..." : "Submit"}
+          </Button>
         </div>
       </form>
     </div>
