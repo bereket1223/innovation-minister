@@ -1,83 +1,24 @@
 import mongoose from 'mongoose';
 
-const departmentSchema = new mongoose.Schema({
-  fullName: { 
-    type: String, 
-    required: true
- },
-  gender:{
-     type: String, 
-     enum: ['Male', 'Female'],
-     //
-     },
-  age:{ 
-    type: Number,
-   //
-     },
-  country: { 
-    type: String,
-    // 
-    },
-  nationality: { 
-    type: String, 
-   //
- },
-  region: { 
-    type: String,
-   //
-     },
-  zone: { 
-    type: String,
-    //
-     },
-  woreda: {
-     type: String, 
-    // 
-    },
-  kebele: {
-     type: String,
-    // 
-    },
-  email: { 
-    type: String, 
-  //, 
- 
-},
-  phone: { 
-    type: String, 
-   //
- },
-  department: { 
-    type: String,
-    //
-     },
-  categories: {
-     type: String,
-  // 
-    },
-  title: {
-     type: String, 
-   // 
-    },
-  patent: { 
-    type: String, 
-    enum: ['Yes', 'No'], 
- //
- },
-  description: {
-     type: String,
-   //
-     },
-  file: {
-     type: String,
-      required: false
-     },
-},
- { 
-    timestamps: true
+const DepartmentSchema = new mongoose.Schema({
+  fullName: { type: String, required: true },
+  gender: { type: String,  },
+  age: { type: Number,  },
+  country: { type: String,  },
+  nationality: { type: String,  },
+  region: { type: String,  },
+  zone: { type: String,  },
+  woreda: { type: String,  },
+  kebele: { type: String,  },
+  emailOrPhone: { type: String,  },
+  department: { type: String,  },
+  categories: { type: String,  }, // Array of categories
+  title: { type: String,  },
+  patent: { type: String, required: false }, // Patent can be optional
+  description: { type: String,  },
+  fileUrl: { type: String, required: false }, // File URL for uploaded docs/images
+}, { timestamps: true });
 
-});
-
-const Department = mongoose.model('Department', departmentSchema);
+const Department = mongoose.model('Department', DepartmentSchema);
 
 export default Department;
