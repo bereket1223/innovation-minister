@@ -1,36 +1,33 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useState, useCallback } from "react"
-import { useRouter } from "next/navigation"
-import { X } from "lucide-react"
-
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Checkbox } from "@/components/ui/checkbox"
+import React, { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface FormData {
-  fullName: string
-  gender: string
-  age: string
-  country: string
-  nationality: string
-  region: string
-  zone: string
-  woreda: string
-  kebele: string
-  emailOrPhone: string
-  department: string
-  categories: string
-  title: string
-  patent: string
-  description: string
-  agreement: boolean
+  fullName: string;
+  gender: string;
+  age: string;
+  country: string;
+  nationality: string;
+  region: string;
+  zone: string;
+  woreda: string;
+  kebele: string;
+  emailOrPhone: string;
+  department: string;
+  categories: string;
+  title: string;
+  patent: string;
+  description: string;
+  agreement: boolean;
 }
 
 export default function DepartmentForm() {
@@ -51,69 +48,83 @@ export default function DepartmentForm() {
     patent: "",
     description: "",
     agreement: false,
-  })
-  const [file, setFile] = useState<File | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  });
 
-  const router = useRouter()
+  const [file, setFile] = useState<File | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const router = useRouter();
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-      const { name, value } = e.target
-      setFormData((prev) => ({ ...prev, [name]: value }))
+      const { name, value } = e.target;
+      setFormData((prev) => ({ ...prev, [name]: value }));
     },
-    [],
-  )
+    []
+  );
 
   const handleCheckboxChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = e.target
-    setFormData((prev) => ({ ...prev, [name]: checked }))
-  }, [])
+    const { name, checked } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: checked }));
+  }, []);
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setFile(e.target.files[0])
+      setFile(e.target.files[0]);
+      setError(null); // Clear error when a file is selected
     }
-  }, [])
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setSuccess(null)
-    setIsLoading(true)
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+    setIsLoading(true);
 
-    const submitData = new FormData()
-    Object.entries(formData).forEach(([key, value]) => {
-      submitData.append(key, value.toString())
-    })
-    if (file) {
-      submitData.append("file", file)
+    // Check if a file is selected
+    if (!file) {
+      setError("Please upload a PDF file.");
+      setIsLoading(false);
+      return;
     }
+
+    // Check if the file is a PDF
+    if (file.type !== "application/pdf") {
+      setError("Only PDF files are allowed.");
+      setIsLoading(false);
+      return;
+    }
+
+    const submitData = new FormData();
+    Object.entries(formData).forEach(([key, value]) => {
+      submitData.append(key, value.toString());
+    });
+    submitData.append("file", file);
 
     try {
       const response = await fetch("http://localhost:5000/api/department/createDepartment", {
         method: "POST",
         body: submitData,
-      })
+      });
 
       if (response.ok) {
-        const data = await response.json()
-        console.log("Department created:", data)
-        setSuccess("Successfully submitted! Redirecting...")
-        setTimeout(() => router.push("/departments"), 2000)
+        const data = await response.json();
+        console.log("Department created:", data);
+        setSuccess("Successfully submitted! Redirecting...");
+        setTimeout(() => router.push("/dashboard"), 2000);
       } else {
-        const errorData = await response.json()
-        setError(errorData.message || "An error occurred during submission.")
+        const errorData = await response.json();
+        setError(errorData.message || "An error occurred during submission.");
       }
     } catch (error) {
-      console.error("Network error:", error)
-      setError("A network error occurred. Please try again.")
+      console.error("Network error:", error);
+      setError("A network error occurred. Please try again.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -279,11 +290,14 @@ export default function DepartmentForm() {
           />
         </div>
 
-        <div className="mt-6 space-y-2">
-          <Label htmlFor="file">File</Label>
+
+        {/* Upload File */}
+        <div className="mt-4">
+          <Label htmlFor="file">Upload File (PDF only)</Label>
           <Input type="file" id="file" name="file" onChange={handleFileChange} />
         </div>
 
+    
         <div className="mt-6 items-top flex space-x-2">
           <Checkbox
             id="agreement"

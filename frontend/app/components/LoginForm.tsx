@@ -1,18 +1,20 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import toast from "react-hot-toast"
+import type React from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import toast from "react-hot-toast";
 
 export default function LoginForm() {
-  const [phone, setphone] = useState("")
-  const [password, setPassword] = useState("")
-  const router = useRouter()
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
+    setErrorMessage(""); // Clear previous errors
     try {
       const response = await fetch("http://localhost:5000/api/user/login", {
         method: "POST",
@@ -21,22 +23,27 @@ export default function LoginForm() {
         },
         body: JSON.stringify({ phone, password }),
         credentials: "include", // This is important for cookies
-      })
+      });
 
       if (response.ok) {
-        toast.success("Login successful!")
-        router.push("/dashboard")
+        toast.success("Login successful!");
+        router.push("/dashboard");
       } else {
-        const data = await response.json()
-        toast.error(data.message || "Login failed. Please try again.")
+        const data = await response.json();
+        setErrorMessage(data.message || "Login failed. Please try again.");
       }
     } catch (error) {
-      toast.error("An error occurred. Please try again.")
+      setErrorMessage("An error occurred. Please try again.");
     }
-  }
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {errorMessage && (
+        <div className="p-3 text-red-700 bg-red-100 border border-red-400 rounded-md">
+          {errorMessage}
+        </div>
+      )}
       <div>
         <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
           Phone Number
@@ -45,7 +52,7 @@ export default function LoginForm() {
           type="tel"
           id="phone"
           value={phone}
-          onChange={(e) => setphone(e.target.value)}
+          onChange={(e) => setPhone(e.target.value)}
           required
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
           placeholder="e.g., +1234567890"
@@ -70,7 +77,6 @@ export default function LoginForm() {
       >
         Log In
       </button>
-
       <p className="mt-4 text-center text-black">
         Don't have an account?{" "}
         <Link href="/signup" className="text-blue-600 hover:underline">
@@ -78,6 +84,5 @@ export default function LoginForm() {
         </Link>
       </p>
     </form>
-  )
+  );
 }
-
