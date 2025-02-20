@@ -1,7 +1,7 @@
 import { createDepartment } from '../../service/department/create.department.service.js';
 import cloudinary from '../../utils/cloudinary.js';
 
- const createDepartmentController = async (req, res) => {
+const createDepartmentController = async (req, res) => {
   try {
     const departmentData = req.body;
     let fileUrl = null;
@@ -27,8 +27,9 @@ import cloudinary from '../../utils/cloudinary.js';
     console.error('Error in createDepartmentController:', error);
     res.status(500).json({
       success: false,
-      message: 'An error occurred while creating the department',
+      message: error.message || 'An error occurred while creating the department',
     });
   }
 };
-export default createDepartmentController
+
+export default createDepartmentController;

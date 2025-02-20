@@ -2,13 +2,16 @@ import Department from '../../models/department.js';
 
 export const createDepartment = async (departmentData) => {
   try {
-    const { emailOrPhone, title } = departmentData;
+    const { email, phoneNumber, knowledgeTitle } = departmentData;
 
-    // Check if a department with the same emailOrPhone and title already exists
-    const existingDepartment = await Department.findOne({ emailOrPhone, title });
+    // Check if a department with the same email or phone number and knowledge title already exists
+    const existingDepartment = await Department.findOne({
+      $or: [{ email }, { phoneNumber }],
+      knowledgeTitle
+    });
 
     if (existingDepartment) {
-      throw new Error("A department with this email/phone and title already exists.");
+      throw new Error("A department with this email/phone and knowledge title already exists.");
     }
 
     // Create and save the new department
