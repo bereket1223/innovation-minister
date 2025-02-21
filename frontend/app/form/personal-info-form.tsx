@@ -493,15 +493,15 @@ export default function PersonalInfoForm() {
               className="flex space-x-4"
             >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="research" id="research" />
+                <RadioGroupItem value="Indigenous Research" id="research" />
                 <Label htmlFor="research">Indigenous Research</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="technology" id="technology" />
+                <RadioGroupItem value="Indigenous Technology" id="technology" />
                 <Label htmlFor="technology">Indigenous Technology</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="innovations" id="innovations" />
+                <RadioGroupItem value="Indigenous Innovation" id="innovations" />
                 <Label htmlFor="innovations">Indigenous Innovations</Label>
               </div>
             </RadioGroup>

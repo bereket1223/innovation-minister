@@ -4,7 +4,6 @@ export const createDepartment = async (departmentData) => {
   try {
     const { email, phoneNumber, knowledgeTitle } = departmentData;
 
-    // Check if a department with the same email or phone number and knowledge title already exists
     const existingDepartment = await Department.findOne({
       $or: [{ email }, { phoneNumber }],
       knowledgeTitle

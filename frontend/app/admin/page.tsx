@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { UsersTable } from "./components/UsersTable"
 import { ResearchTable } from "./components/ResearchTable"
-import { InnovationTable } from "./components/InnovationTable"
+import {IndigenousTables } from "./components/indigenous-tables"
 import { TechnologyTable } from "./components/TechnologyTable"
 import { StatisticsCards } from "./components/StatisticsCards"
 
@@ -23,7 +23,7 @@ export default function AdminPage() {
       {activeTab === "dashboard" && <StatisticsCards />}
       {activeTab === "users" && <UsersTable />}
       {activeTab === "research" && <ResearchTable />}
-      {activeTab === "innovation" && <InnovationTable />}
+      {activeTab === "innovation" && <IndigenousTables />}
       {activeTab === "technology" && <TechnologyTable />}
     </div>
   )
