@@ -10,7 +10,6 @@ const createDepartmentController = async (req, res) => {
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: 'departments',
         resource_type: "raw",
-        type: "upload"
       });
       fileUrl = result.secure_url;
     }

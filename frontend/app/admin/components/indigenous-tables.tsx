@@ -33,7 +33,7 @@ interface IndigenousData {
   agreement: boolean;
 }
 
-function IndigenousTable({ data, caption }: { data: IndigenousData[]; caption: string }) {
+function IndigenousTable({ data, caption, onViewFile }: { data: IndigenousData[]; caption: string; onViewFile: (url: string) => void }) {
   return (
     <Table>
       <TableCaption>{caption}</TableCaption>
@@ -62,7 +62,7 @@ function IndigenousTable({ data, caption }: { data: IndigenousData[]; caption: s
           <TableHead>Sub Category</TableHead>
           <TableHead>Other Sub Category</TableHead>
           <TableHead>Interest Areas</TableHead>
-          <TableHead>File URL</TableHead>
+          <TableHead>File</TableHead>
           <TableHead>Agreement</TableHead>
         </TableRow>
       </TableHeader>
@@ -93,20 +93,18 @@ function IndigenousTable({ data, caption }: { data: IndigenousData[]; caption: s
               <TableCell>{item.subCategory}</TableCell>
               <TableCell>{item.otherSubCategory}</TableCell>
               <TableCell>{item.interestAreas}</TableCell>
-             <TableCell>
-  {item.fileUrl ? (
-    <button
-      onClick={() => window.open(item.fileUrl, "_blank")}
-      className="text-blue-500 underline"
-    >
-      View File
-    </button>
-  ) : (
-    <span className="text-gray-400">No File</span>
-  )}
-</TableCell>
-
-
+              <TableCell>
+                {item.fileUrl ? (
+                  <button
+                    onClick={() => onViewFile(item.fileUrl)}
+                    className="text-blue-500 underline"
+                  >
+                    View File
+                  </button>
+                ) : (
+                  <span className="text-gray-400">No File</span>
+                )}
+              </TableCell>
               <TableCell>{item.agreement ? "Yes" : "No"}</TableCell>
             </TableRow>
           ))
@@ -130,6 +128,7 @@ export function IndigenousTables() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -168,21 +167,30 @@ export function IndigenousTables() {
   if (error) return <p className="text-red-500">Error: {error}</p>;
 
   return (
-    <Tabs defaultValue="innovation">
-      <TabsList>
-        <TabsTrigger value="innovation">Indigenous Innovation</TabsTrigger>
-        <TabsTrigger value="research">Indigenous Research</TabsTrigger>
-        <TabsTrigger value="technology">Indigenous Technology</TabsTrigger>
-      </TabsList>
-      <TabsContent value="innovation">
-        <IndigenousTable data={data.innovation} caption="A list of indigenous innovations." />
-      </TabsContent>
-      <TabsContent value="research">
-        <IndigenousTable data={data.research} caption="A list of indigenous research." />
-      </TabsContent>
-      <TabsContent value="technology">
-        <IndigenousTable data={data.technology} caption="A list of indigenous technologies." />
-      </TabsContent>
-    </Tabs>
+    <div>
+      <Tabs defaultValue="innovation">
+        <TabsList>
+          <TabsTrigger value="innovation">Indigenous Innovation</TabsTrigger>
+          <TabsTrigger value="research">Indigenous Research</TabsTrigger>
+          <TabsTrigger value="technology">Indigenous Technology</TabsTrigger>
+        </TabsList>
+        <TabsContent value="innovation">
+          <IndigenousTable data={data.innovation} caption="A list of indigenous innovations." onViewFile={setSelectedFile} />
+        </TabsContent>
+        <TabsContent value="research">
+          <IndigenousTable data={data.research} caption="A list of indigenous research." onViewFile={setSelectedFile} />
+        </TabsContent>
+        <TabsContent value="technology">
+          <IndigenousTable data={data.technology} caption="A list of indigenous technologies." onViewFile={setSelectedFile} />
+        </TabsContent>
+      </Tabs>
+
+      {selectedFile && (
+        <div className="mt-4">
+          <h2 className="text-lg font-semibold">PDF Preview</h2>
+          <iframe src={selectedFile} className="w-full h-[600px] border rounded-lg shadow-md" />
+        </div>
+      )}
+    </div>
   );
 }
