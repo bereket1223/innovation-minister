@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { Upload, CheckCircle } from 'lucide-react'
+import { Upload, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,13 +11,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 
 interface FormData {
   fullName: string
   gender: string
-  age: string // Changed from dateOfBirth
+  age: string
   nationality: string
   region: string
   zone: string
@@ -45,7 +45,7 @@ export default function PersonalInfoForm() {
   const [formData, setFormData] = useState<FormData>({
     fullName: "",
     gender: "",
-    age: "", // Changed from dateOfBirth
+    age: "",
     nationality: "",
     region: "",
     zone: "",
@@ -62,7 +62,7 @@ export default function PersonalInfoForm() {
     completionYear: "",
     specialization: "",
     knowledgeTitle: "",
-    knowledgeDepartment: "research",
+    knowledgeDepartment: "Indigenous Research",
     subCategory: "",
     otherSubCategory: "",
     interestAreas: "",
@@ -74,6 +74,7 @@ export default function PersonalInfoForm() {
   const [success, setSuccess] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [showOtherSubCategory, setShowOtherSubCategory] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
 
   const router = useRouter()
 
@@ -127,8 +128,13 @@ export default function PersonalInfoForm() {
   }, [])
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFile(e.target.files[0])
+    if (e.target.files && e.target.files.length > 0) {
+      const selectedFile = e.target.files[0]
+      if (selectedFile.type !== "application/pdf") {
+        setError("Only PDF files are allowed.")
+        return
+      }
+      setFile(selectedFile)
       setError(null)
     }
   }, [])
@@ -138,6 +144,7 @@ export default function PersonalInfoForm() {
     setError(null)
     setSuccess(null)
     setIsLoading(true)
+    setUploadProgress(0)
 
     if (!file) {
       setError("Please upload a PDF file.")
@@ -151,17 +158,35 @@ export default function PersonalInfoForm() {
       return
     }
 
-    const submitData = new FormData()
-    Object.entries(formData).forEach(([key, value]) => {
-      submitData.append(key, value.toString())
-    })
-    submitData.append("file", file)
-
     try {
+      // Create a new FormData instance
+      const submitData = new FormData()
+
+      // First append all text fields
+      Object.entries(formData).forEach(([key, value]) => {
+        if (typeof value === "boolean") {
+          submitData.append(key, value ? "true" : "false")
+        } else {
+          submitData.append(key, String(value))
+        }
+      })
+
+      // Append the file last with the correct field name
+      submitData.append("file", file)
+
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress((prev) => Math.min(prev + 5, 90))
+      }, 200)
+
       const response = await fetch("http://localhost:5000/api/department/createDepartment", {
         method: "POST",
         body: submitData,
+        // Important: Don't set Content-Type header manually
       })
+
+      clearInterval(progressInterval)
+      setUploadProgress(100)
 
       if (response.ok) {
         const data = await response.json()
@@ -169,7 +194,7 @@ export default function PersonalInfoForm() {
         setSuccess("Successfully submitted! Redirecting...")
         setTimeout(() => router.push("/dashboard"), 2000)
       } else {
-        const errorData = await response.json()
+        const errorData = await response.json().catch(() => ({ message: "An error occurred during submission." }))
         setError(errorData.message || "An error occurred during submission.")
       }
     } catch (error) {
@@ -490,7 +515,7 @@ export default function PersonalInfoForm() {
               value={formData.knowledgeDepartment}
               onValueChange={(value) => handleSelectChange("knowledgeDepartment", value)}
               required
-              className="flex space-x-4"
+              className="flex flex-col md:flex-row md:space-x-4 space-y-2 md:space-y-0"
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="Indigenous Research" id="research" />
@@ -573,6 +598,7 @@ export default function PersonalInfoForm() {
               </Button>
               {file && <span className="text-sm text-gray-600">{file.name}</span>}
             </div>
+            {file && <p className="text-xs text-gray-500 mt-1">File size: {(file.size / 1024 / 1024).toFixed(2)} MB</p>}
           </div>
         </CardContent>
       </Card>
@@ -600,14 +626,14 @@ export default function PersonalInfoForm() {
           </div>
         </CardContent>
         <CardFooter>
-          <Button 
-            type="submit" 
-            disabled={isLoading || !formData.agreement} 
+          <Button
+            type="submit"
+            disabled={isLoading || !formData.agreement}
             className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <>
-                <Progress value={33} className="w-4 h-4 mr-2 animate-spin" />
+                <Progress value={uploadProgress} className="w-24 h-4 mr-2" />
                 Submitting...
               </>
             ) : (
