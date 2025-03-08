@@ -23,6 +23,9 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Make uploads directory accessible
+app.use("/uploads", express.static("uploads"))
+
 // Routes
 app.use('/api/user', userRoutes);
 app.use('/api/department', departmentRoutes);

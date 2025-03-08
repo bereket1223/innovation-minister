@@ -2,10 +2,18 @@ import express from "express";
 import multer from "multer";
 import { createDepartment, getIndigenousDataController, updateDepartment, deleteDepartment } from "../controllers/department/index.js";
 
-const upload = multer({ dest: "uploads/" })
+import { upload, handleMulterError } from "../middleware/multer.middleware.js"
+
 const router = express.Router()
 
-router.post("/createDepartment", upload.single("file"), createDepartment)
+// Create department route with file upload middleware
+router.post(
+  "/createDepartment",
+  upload.single("file"), // 'file' is the field name from the frontend
+  handleMulterError,
+  createDepartment,
+)
+
 router.get("/:department", getIndigenousDataController)
 router.put("/:id", updateDepartment)
 router.delete("/:id", deleteDepartment)

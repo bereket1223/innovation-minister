@@ -1,33 +1,131 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose"
 
-const DepartmentSchema = new mongoose.Schema({
-  fullName: { type: String, required: true },
-  gender: { type: String, required: true },
-  age : { type: String, required: true },
-  nationality: { type: String, required: true },
-  region: { type: String, required: true },
-  zone: { type: String, required: true },
-  woreda: { type: String, required: true },
-  kebele: { type: String, required: true },
-  email: { type: String, required: true },
-  phoneNumber: { type: String, required: true },
-  institution: { type: String },
-  department: { type: String },
-  designation: { type: String },
-  institutionAddress: { type: String },
-  highestDegree: { type: String },
-  university: { type: String },
-  completionYear: { type: String },
-  specialization: { type: String },
-  knowledgeTitle: { type: String, required: true },
-  knowledgeDepartment: { type: String, required: true },
-  subCategory: { type: String, required: true },
-  otherSubCategory: { type: String },
-  interestAreas: { type: String, required: true },
-  fileUrl: { type: String, required: true },
-  agreement: { type: Boolean, required: true },
-}, { timestamps: true });
+const departmentSchema = new mongoose.Schema(
+  {
+    // Personal Information
+    fullName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    gender: {
+      type: String,
+      required: true,
+      enum: ["male", "female", "other"],
+    },
+    age: {
+      type: Number,
+      required: true,
+    },
+    nationality: {
+      type: String,
+      required: true,
+    },
+    region: {
+      type: String,
+      required: true,
+    },
+    zone: {
+      type: String,
+      required: true,
+    },
+    woreda: {
+      type: String,
+      required: true,
+    },
+    kebele: {
+      type: String,
+      required: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      trim: true,
+      lowercase: true,
+    },
+    phoneNumber: {
+      type: String,
+      required: true,
+    },
 
-const Department = mongoose.model('Department', DepartmentSchema);
+    // Affiliation Details (Optional)
+    institution: {
+      type: String,
+      trim: true,
+    },
+    department: {
+      type: String,
+      trim: true,
+    },
+    designation: {
+      type: String,
+      trim: true,
+    },
+    institutionAddress: {
+      type: String,
+      trim: true,
+    },
 
-export default Department;
+    // Education & Qualifications (Optional)
+    highestDegree: {
+      type: String,
+      trim: true,
+    },
+    university: {
+      type: String,
+      trim: true,
+    },
+    completionYear: {
+      type: String,
+    },
+    specialization: {
+      type: String,
+      trim: true,
+    },
+
+    // Indigenous Knowledge Information
+    knowledgeTitle: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    knowledgeDepartment: {
+      type: String,
+      required: true,
+      enum: ["Indigenous Research", "Indigenous Technology", "Indigenous Innovation"],
+    },
+    subCategory: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    otherSubCategory: {
+      type: String,
+      trim: true,
+    },
+    interestAreas: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    // Document path
+    documentPath: {
+      type: String,
+      required: true,
+    },
+
+    // Agreement
+    agreement: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
+  },
+  { timestamps: true },
+)
+
+const Department = mongoose.model("Department", departmentSchema)
+
+export default Department
+
