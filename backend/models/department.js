@@ -109,8 +109,12 @@ const departmentSchema = new mongoose.Schema(
       trim: true,
     },
 
-    // Document path
+    // Document path and URL
     documentPath: {
+      type: String,
+      required: true,
+    },
+    fileUrl: {
       type: String,
       required: true,
     },
@@ -120,6 +124,13 @@ const departmentSchema = new mongoose.Schema(
       type: Boolean,
       required: true,
       default: false,
+    },
+
+    // Status
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
     },
   },
   { timestamps: true },

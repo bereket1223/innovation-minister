@@ -1,26 +1,34 @@
-import express from "express";
-import multer from "multer";
-import { createDepartment, getIndigenousDataController, updateDepartment, deleteDepartment } from "../controllers/department/index.js";
-
+import express from "express"
+import {
+  createDepartmentController,
+  getDepartmentByIdController,
+  getAllDepartmentsController,
+  getDepartmentsByTypeController,
+  deleteDepartmentController,
+  approveDepartmentController,
+} from "../controllers/department/create.department.controller.js"
 import { upload, handleMulterError } from "../middleware/multer.middleware.js"
 
 const router = express.Router()
 
 // Create department route with file upload middleware
-router.post(
-  "/createDepartment",
-  upload.single("file"), // 'file' is the field name from the frontend
-  handleMulterError,
-  createDepartment,
-)
+router.post("/createDepartment", upload.single("file"), handleMulterError, createDepartmentController)
 
-router.get("/:department", getIndigenousDataController)
-router.put("/:id", updateDepartment)
-router.delete("/:id", deleteDepartment)
+// Get departments by type (indigenous-innovation, indigenous-research, indigenous-technology)
+// IMPORTANT: Place this route BEFORE the /:id route to avoid conflicts
+router.get("/type/:type", getDepartmentsByTypeController)
+
+// Delete department
+router.delete("/delete/:id", deleteDepartmentController)
+
+// Approve department
+router.put("/approve/:id", approveDepartmentController)
+
+// Get department by ID
+router.get("/:id", getDepartmentByIdController)
+
+// Get all departments
+router.get("/", getAllDepartmentsController)
 
 export default router
-
-
-
-
 

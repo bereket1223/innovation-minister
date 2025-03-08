@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react"
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Eye, FileText, Loader2 } from "lucide-react"
+import Link from "next/link"
 
 interface IndigenousData {
   _id: string
@@ -33,93 +34,82 @@ interface IndigenousData {
   interestAreas: string
   fileUrl: string
   agreement: boolean
+  status: string
 }
 
 function IndigenousTable({
   data,
   caption,
   onViewFile,
-}: { data: IndigenousData[]; caption: string; onViewFile: (url: string) => void }) {
+}: {
+  data: IndigenousData[]
+  caption: string
+  onViewFile: (url: string) => void
+}) {
+  // Show only essential columns in the table for better UX
   return (
-    <Table>
-      <TableCaption>{caption}</TableCaption>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Full Name</TableHead>
-          <TableHead>Gender</TableHead>
-          <TableHead>Age</TableHead>
-          <TableHead>Nationality</TableHead>
-          <TableHead>Region</TableHead>
-          <TableHead>Zone</TableHead>
-          <TableHead>Woreda</TableHead>
-          <TableHead>Kebele</TableHead>
-          <TableHead>Email</TableHead>
-          <TableHead>Phone Number</TableHead>
-          <TableHead>Institution</TableHead>
-          <TableHead>Department</TableHead>
-          <TableHead>Designation</TableHead>
-          <TableHead>Institution Address</TableHead>
-          <TableHead>Highest Degree</TableHead>
-          <TableHead>University</TableHead>
-          <TableHead>Completion Year</TableHead>
-          <TableHead>Specialization</TableHead>
-          <TableHead>Knowledge Title</TableHead>
-          <TableHead>Knowledge Department</TableHead>
-          <TableHead>Sub Category</TableHead>
-          <TableHead>Other Sub Category</TableHead>
-          <TableHead>Interest Areas</TableHead>
-          <TableHead>File</TableHead>
-          <TableHead>Agreement</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {data.length > 0 ? (
-          data.map((item) => (
-            <TableRow key={item._id}>
-              <TableCell>{item.fullName}</TableCell>
-              <TableCell>{item.gender}</TableCell>
-              <TableCell>{item.age}</TableCell>
-              <TableCell>{item.nationality}</TableCell>
-              <TableCell>{item.region}</TableCell>
-              <TableCell>{item.zone}</TableCell>
-              <TableCell>{item.woreda}</TableCell>
-              <TableCell>{item.kebele}</TableCell>
-              <TableCell>{item.email}</TableCell>
-              <TableCell>{item.phoneNumber}</TableCell>
-              <TableCell>{item.institution}</TableCell>
-              <TableCell>{item.department}</TableCell>
-              <TableCell>{item.designation}</TableCell>
-              <TableCell>{item.institutionAddress}</TableCell>
-              <TableCell>{item.highestDegree}</TableCell>
-              <TableCell>{item.university}</TableCell>
-              <TableCell>{item.completionYear}</TableCell>
-              <TableCell>{item.specialization}</TableCell>
-              <TableCell>{item.knowledgeTitle}</TableCell>
-              <TableCell>{item.knowledgeDepartment}</TableCell>
-              <TableCell>{item.subCategory}</TableCell>
-              <TableCell>{item.otherSubCategory}</TableCell>
-              <TableCell>{item.interestAreas}</TableCell>
-              <TableCell>
-                {item.fileUrl ? (
-                  <button onClick={() => onViewFile(item.fileUrl)} className="text-blue-500 underline">
-                    View File
-                  </button>
-                ) : (
-                  <span className="text-gray-400">No File</span>
-                )}
-              </TableCell>
-              <TableCell>{item.agreement ? "Yes" : "No"}</TableCell>
-            </TableRow>
-          ))
-        ) : (
+    <div className="overflow-x-auto">
+      <Table>
+        <TableCaption>{caption}</TableCaption>
+        <TableHeader>
           <TableRow>
-            <TableCell colSpan={25} className="text-center">
-              No data available
-            </TableCell>
+            <TableHead>Full Name</TableHead>
+            <TableHead>Knowledge Title</TableHead>
+            <TableHead>Knowledge Department</TableHead>
+            <TableHead>Sub Category</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
-        )}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {data.length > 0 ? (
+            data.map((item) => (
+              <TableRow key={item._id}>
+                <TableCell>{item.fullName}</TableCell>
+                <TableCell>{item.knowledgeTitle}</TableCell>
+                <TableCell>{item.knowledgeDepartment}</TableCell>
+                <TableCell>{item.subCategory}</TableCell>
+                <TableCell>
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      item.status === "approved"
+                        ? "bg-green-100 text-green-800"
+                        : item.status === "rejected"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-yellow-100 text-yellow-800"
+                    }`}
+                  >
+                    {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <div className="flex space-x-2">
+                    <Link href={`/indigenous-detail/${item._id}`}>
+                      <Button variant="outline" size="sm">
+                        <Eye className="h-4 w-4 mr-1" />
+                        Details
+                      </Button>
+                    </Link>
+                    {item.fileUrl && (
+                      <Button variant="outline" size="sm" onClick={() => onViewFile(item.fileUrl)}>
+                        <FileText className="h-4 w-4 mr-1" />
+                        File
+                      </Button>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center">
+                No data available
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </div>
   )
 }
 
@@ -132,7 +122,6 @@ export function IndigenousTables() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedFile, setSelectedFile] = useState<string | null>(null)
-  const [fileError, setFileError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -141,13 +130,15 @@ export function IndigenousTables() {
         const departments = ["indigenous-innovation", "indigenous-research", "indigenous-technology"]
 
         const requests = departments.map(async (dept) => {
-          const response = await fetch(`${baseUrl}/${dept}`)
+          // Updated URL to use the new route structure
+          const response = await fetch(`${baseUrl}/type/${dept}`)
 
           if (!response.ok) {
             throw new Error(`Failed to fetch ${dept}: ${response.status} ${response.statusText}`)
           }
 
-          return response.json()
+          const result = await response.json()
+          return result.data || [] // Extract data from ApiResponse format
         })
 
         const [innovationData, researchData, technologyData] = await Promise.all(requests)
@@ -167,77 +158,83 @@ export function IndigenousTables() {
     fetchData()
   }, [])
 
-  const handleViewFile = async (url: string) => {
+  const handleViewFile = (url: string) => {
     setSelectedFile(url)
-    setFileError(null)
-
-    try {
-      const response = await fetch(url)
-      if (!response.ok) {
-        throw new Error(`Failed to fetch file: ${response.status} ${response.statusText}`)
-      }
-      // If the fetch is successful, the file exists and is accessible
-      // However, we can't guarantee it's a valid PDF
-      const contentType = response.headers.get("content-type")
-      if (contentType && !contentType.includes("application/pdf")) {
-        throw new Error("The file is not a PDF")
-      }
-    } catch (err: any) {
-      console.error("Error fetching file:", err)
-      setFileError(`Error loading file: ${err.message}`)
-    }
+    // Scroll to the PDF viewer
+    setTimeout(() => {
+      document.getElementById("pdf-viewer")?.scrollIntoView({ behavior: "smooth" })
+    }, 100)
   }
 
-  if (loading) return <p>Loading data...</p>
-  if (error) return <p className="text-red-500">Error: {error}</p>
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Loading data...</span>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+        <div className="flex">
+          <div className="ml-3">
+            <p className="text-red-700">Error loading data</p>
+            <p className="text-sm text-red-500">{error}</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div>
-      <Tabs defaultValue="innovation">
-        <TabsList>
-          <TabsTrigger value="innovation">Indigenous Innovation</TabsTrigger>
-          <TabsTrigger value="research">Indigenous Research</TabsTrigger>
-          <TabsTrigger value="technology">Indigenous Technology</TabsTrigger>
-        </TabsList>
-        <TabsContent value="innovation">
-          <IndigenousTable
-            data={data.innovation}
-            caption="A list of indigenous innovations."
-            onViewFile={handleViewFile}
-          />
-        </TabsContent>
-        <TabsContent value="research">
-          <IndigenousTable data={data.research} caption="A list of indigenous research." onViewFile={handleViewFile} />
-        </TabsContent>
-        <TabsContent value="technology">
-          <IndigenousTable
-            data={data.technology}
-            caption="A list of indigenous technologies."
-            onViewFile={handleViewFile}
-          />
-        </TabsContent>
-      </Tabs>
+    <div className="space-y-8">
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h1 className="text-2xl font-bold mb-6">Indigenous Knowledge Database</h1>
+
+        <Tabs defaultValue="innovation">
+          <TabsList className="mb-4">
+            <TabsTrigger value="innovation">Indigenous Innovation</TabsTrigger>
+            <TabsTrigger value="research">Indigenous Research</TabsTrigger>
+            <TabsTrigger value="technology">Indigenous Technology</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="innovation">
+            <IndigenousTable
+              data={data.innovation}
+              caption="A list of indigenous innovations."
+              onViewFile={handleViewFile}
+            />
+          </TabsContent>
+
+          <TabsContent value="research">
+            <IndigenousTable
+              data={data.research}
+              caption="A list of indigenous research."
+              onViewFile={handleViewFile}
+            />
+          </TabsContent>
+
+          <TabsContent value="technology">
+            <IndigenousTable
+              data={data.technology}
+              caption="A list of indigenous technologies."
+              onViewFile={handleViewFile}
+            />
+          </TabsContent>
+        </Tabs>
+      </div>
 
       {selectedFile && (
-        <div className="mt-4">
-          <h2 className="text-lg font-semibold">PDF Preview</h2>
-          <div className="flex flex-col gap-2">
-            {fileError ? (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{fileError}</AlertDescription>
-              </Alert>
-            ) : (
-              <iframe src={selectedFile} className="w-full h-[600px] border rounded-lg shadow-md" title="PDF Preview" />
-            )}
-            <div className="flex justify-between">
-              <p className="text-sm text-gray-500">If the PDF doesn't load, it might be due to CORS restrictions</p>
-              <a href={selectedFile} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
-                Open in new tab
-              </a>
-            </div>
+        <div id="pdf-viewer" className="bg-white p-6 rounded-lg shadow-md">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">PDF Document</h2>
+            <Button variant="outline" onClick={() => window.open(selectedFile, "_blank")}>
+              Open in New Tab
+            </Button>
           </div>
+          <iframe src={selectedFile} className="w-full h-[600px] border rounded-lg shadow-md" title="PDF Viewer" />
         </div>
       )}
     </div>
