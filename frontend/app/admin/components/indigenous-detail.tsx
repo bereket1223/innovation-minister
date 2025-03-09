@@ -2,11 +2,23 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { useParams } from "next/navigation"
+import { ArrowLeft, FileText, Loader2, CheckCircle, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, FileText, Check, ArrowLeft, Trash2 } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { toast } from "@/components/ui/use-toast"
 
 interface IndigenousData {
   _id: string
@@ -36,360 +48,355 @@ interface IndigenousData {
   fileUrl: string
   agreement: boolean
   status: string
-  createdAt: string
-  updatedAt: string
 }
 
-export default function IndigenousDetail() {
+export function IndigenousDetail({ id }: { id: string }) {
   const router = useRouter()
-  const params = useParams()
-  const id = params?.id
-
   const [data, setData] = useState<IndigenousData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [actionLoading, setActionLoading] = useState(false)
-  const [showPdf, setShowPdf] = useState(false)
+  const [approving, setApproving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
-    if (id) {
-      fetchData()
-    }
-  }, [id])
-
-  const fetchData = async () => {
-    try {
-      setLoading(true)
-      // This route is now correct for fetching by ID
-      const response = await fetch(`http://localhost:5000/api/department/${id}`)
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`)
-      }
-
-      const result = await response.json()
-      setData(result.data)
-      setLoading(false)
-    } catch (err: any) {
-      setError(err.message)
-      setLoading(false)
-    }
-  }
-
-  const handleDelete = async () => {
-    if (confirm("Are you sure you want to delete this entry? This action cannot be undone.")) {
+    const fetchData = async () => {
       try {
-        setActionLoading(true)
-        const response = await fetch(`http://localhost:5000/api/department/delete/${id}`, {
-          method: "DELETE",
-        })
+        const response = await fetch(`http://localhost:5000/api/department/${id}`)
 
         if (!response.ok) {
-          throw new Error(`Failed to delete: ${response.status} ${response.statusText}`)
+          throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`)
         }
 
-        router.push("/indigenous-tables")
+        const result = await response.json()
+        setData(result.data)
+        setLoading(false)
       } catch (err: any) {
         setError(err.message)
-        setActionLoading(false)
+        setLoading(false)
       }
     }
-  }
+
+    fetchData()
+  }, [id])
 
   const handleApprove = async () => {
+    if (!data) return
+
+    setApproving(true)
     try {
-      setActionLoading(true)
-      const response = await fetch(`http://localhost:5000/api/department/approve/${id}`, {
+      const response = await fetch(`http://localhost:5000/api/department/${id}/approve`, {
         method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: "approved" }),
       })
 
       if (!response.ok) {
         throw new Error(`Failed to approve: ${response.status} ${response.statusText}`)
       }
 
-      // Refresh the data after approval
-      await fetchData()
-      setActionLoading(false)
+      const result = await response.json()
+      setData({ ...data, status: "approved" })
+      toast({
+        title: "Success",
+        description: "Entry has been approved",
+        variant: "default",
+      })
     } catch (err: any) {
-      setError(err.message)
-      setActionLoading(false)
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      })
+    } finally {
+      setApproving(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!data) return
+
+    setDeleting(true)
+    try {
+      const response = await fetch(`http://localhost:5000/api/department/${id}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete: ${response.status} ${response.statusText}`)
+      }
+
+      toast({
+        title: "Success",
+        description: "Entry has been deleted",
+        variant: "default",
+      })
+
+      // Navigate back to the main page after successful deletion
+      router.push("/")
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      })
+      setDeleting(false)
     }
   }
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
+      <div className="flex justify-center items-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <span className="ml-2">Loading data...</span>
       </div>
     )
   }
 
-  if (error) {
+  if (error || !data) {
     return (
-      <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
-        <div className="flex">
-          <div className="ml-3">
-            <p className="text-red-700">Error loading data</p>
-            <p className="text-sm text-red-500">{error}</p>
-            <Button variant="outline" className="mt-4" onClick={() => router.push("/indigenous-tables")}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Tables
-            </Button>
+      <div className="container mx-auto p-6">
+        <Button variant="outline" onClick={() => router.back()} className="mb-4">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+          <div className="flex">
+            <div className="ml-3">
+              <p className="text-red-700">Error loading data</p>
+              <p className="text-sm text-red-500">{error || "Data not found"}</p>
+            </div>
           </div>
         </div>
       </div>
     )
   }
 
-  if (!data) {
-    return (
-      <div className="text-center p-8">
-        <p className="text-lg mb-4">No data found for this ID</p>
-        <Button variant="outline" onClick={() => router.push("/indigenous-tables")}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Tables
-        </Button>
-      </div>
-    )
-  }
-
-  // Format date for display
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    })
-  }
-
   return (
-    <div className="container mx-auto p-4 max-w-5xl">
-      <div className="mb-6 flex justify-between items-center">
-        <div className="flex items-center">
-          <Button variant="outline" onClick={() => router.push("/indigenous-tables")} className="mr-4">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-          <h1 className="text-2xl font-bold">{data.knowledgeTitle}</h1>
-        </div>
-        <Badge
-          className={
-            data.status === "approved"
-              ? "bg-green-100 text-green-800 hover:bg-green-200"
-              : data.status === "rejected"
-                ? "bg-red-100 text-red-800 hover:bg-red-200"
-                : "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
-          }
-        >
-          {data.status.charAt(0).toUpperCase() + data.status.slice(1)}
-        </Badge>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Left column - Personal Information */}
-        <Card className="md:col-span-1">
-          <CardHeader>
-            <CardTitle>Personal Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <h3 className="font-medium text-gray-500">Full Name</h3>
-              <p>{data.fullName}</p>
-            </div>
-            <div>
-              <h3 className="font-medium text-gray-500">Gender</h3>
-              <p>{data.gender}</p>
-            </div>
-            <div>
-              <h3 className="font-medium text-gray-500">Age</h3>
-              <p>{data.age}</p>
-            </div>
-            <div>
-              <h3 className="font-medium text-gray-500">Nationality</h3>
-              <p>{data.nationality}</p>
-            </div>
-            <div>
-              <h3 className="font-medium text-gray-500">Region</h3>
-              <p>{data.region}</p>
-            </div>
-            <div>
-              <h3 className="font-medium text-gray-500">Zone</h3>
-              <p>{data.zone}</p>
-            </div>
-            <div>
-              <h3 className="font-medium text-gray-500">Woreda</h3>
-              <p>{data.woreda}</p>
-            </div>
-            <div>
-              <h3 className="font-medium text-gray-500">Kebele</h3>
-              <p>{data.kebele}</p>
-            </div>
-            <div>
-              <h3 className="font-medium text-gray-500">Email</h3>
-              <p>{data.email}</p>
-            </div>
-            <div>
-              <h3 className="font-medium text-gray-500">Phone Number</h3>
-              <p>{data.phoneNumber}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Middle column - Knowledge Information */}
-        <Card className="md:col-span-1">
-          <CardHeader>
-            <CardTitle>Knowledge Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <h3 className="font-medium text-gray-500">Knowledge Title</h3>
-              <p>{data.knowledgeTitle}</p>
-            </div>
-            <div>
-              <h3 className="font-medium text-gray-500">Knowledge Department</h3>
-              <p>{data.knowledgeDepartment}</p>
-            </div>
-            <div>
-              <h3 className="font-medium text-gray-500">Sub Category</h3>
-              <p>{data.subCategory}</p>
-            </div>
-            {data.otherSubCategory && (
-              <div>
-                <h3 className="font-medium text-gray-500">Other Sub Category</h3>
-                <p>{data.otherSubCategory}</p>
-              </div>
-            )}
-            <div>
-              <h3 className="font-medium text-gray-500">Interest Areas</h3>
-              <p>{data.interestAreas}</p>
-            </div>
-            <div>
-              <h3 className="font-medium text-gray-500">Submission Date</h3>
-              <p>{formatDate(data.createdAt)}</p>
-            </div>
-            <div>
-              <h3 className="font-medium text-gray-500">Last Updated</h3>
-              <p>{formatDate(data.updatedAt)}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Right column - Additional Information */}
-        <Card className="md:col-span-1">
-          <CardHeader>
-            <CardTitle>Additional Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <h3 className="font-medium text-gray-500">Institution</h3>
-              <p>{data.institution || "Not provided"}</p>
-            </div>
-            <div>
-              <h3 className="font-medium text-gray-500">Department</h3>
-              <p>{data.department || "Not provided"}</p>
-            </div>
-            <div>
-              <h3 className="font-medium text-gray-500">Designation</h3>
-              <p>{data.designation || "Not provided"}</p>
-            </div>
-            <div>
-              <h3 className="font-medium text-gray-500">Institution Address</h3>
-              <p>{data.institutionAddress || "Not provided"}</p>
-            </div>
-            <div>
-              <h3 className="font-medium text-gray-500">Highest Degree</h3>
-              <p>{data.highestDegree || "Not provided"}</p>
-            </div>
-            <div>
-              <h3 className="font-medium text-gray-500">University</h3>
-              <p>{data.university || "Not provided"}</p>
-            </div>
-            <div>
-              <h3 className="font-medium text-gray-500">Completion Year</h3>
-              <p>{data.completionYear || "Not provided"}</p>
-            </div>
-            <div>
-              <h3 className="font-medium text-gray-500">Specialization</h3>
-              <p>{data.specialization || "Not provided"}</p>
-            </div>
-            <div>
-              <h3 className="font-medium text-gray-500">Agreement</h3>
-              <p>{data.agreement ? "Yes" : "No"}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* PDF Viewer */}
-      {data.fileUrl && (
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle className="flex justify-between items-center">
-              <span>Attached Document</span>
-              <Button variant="outline" onClick={() => setShowPdf(!showPdf)}>
-                {showPdf ? "Hide Document" : "Show Document"}
-              </Button>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {!showPdf ? (
-              <div className="flex justify-center items-center p-8 border rounded-md">
-                <Button onClick={() => window.open(data.fileUrl, "_blank")} className="flex items-center">
-                  <FileText className="h-5 w-5 mr-2" />
-                  Open PDF in New Tab
-                </Button>
-              </div>
-            ) : (
-              <iframe src={data.fileUrl} className="w-full h-[600px] border rounded-lg shadow-md" title="PDF Viewer" />
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Action Buttons */}
-      <div className="mt-6 flex justify-between">
-        <Button variant="destructive" onClick={handleDelete} disabled={actionLoading}>
-          {actionLoading ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Processing...
-            </>
-          ) : (
-            <>
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
-            </>
-          )}
+    <div className="container mx-auto p-6">
+      <div className="flex justify-between items-center mb-6">
+        <Button variant="outline" onClick={() => router.back()}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
         </Button>
-
-        <div className="space-x-2">
-          <Button variant="outline" onClick={() => router.push("/indigenous-tables")}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Tables
-          </Button>
-
+        <div className="flex space-x-2">
           {data.status !== "approved" && (
             <Button
-              variant="default"
+              variant="outline"
+              className="bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700 border-green-200"
               onClick={handleApprove}
-              disabled={actionLoading}
-              className="bg-green-600 hover:bg-green-700"
+              disabled={approving}
             >
-              {actionLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <Check className="h-4 w-4 mr-2" />
-                  Approve
-                </>
-              )}
+              {approving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
+              Approve
             </Button>
           )}
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="outline"
+                className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 border-red-200"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete this indigenous knowledge entry.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDelete}
+                  className="bg-red-600 text-white hover:bg-red-700"
+                  disabled={deleting}
+                >
+                  {deleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div>
+              <CardTitle className="text-2xl font-bold">{data.knowledgeTitle}</CardTitle>
+              <CardDescription>{data.knowledgeDepartment}</CardDescription>
+            </div>
+            <Badge
+              className={`px-3 py-1 text-sm ${
+                data.status === "approved"
+                  ? "bg-green-100 text-green-800 hover:bg-green-100"
+                  : data.status === "rejected"
+                    ? "bg-red-100 text-red-800 hover:bg-red-100"
+                    : "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
+              }`}
+            >
+              {data.status.charAt(0).toUpperCase() + data.status.slice(1)}
+            </Badge>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2">
+                    <span className="text-muted-foreground">Full Name:</span>
+                    <span>{data.fullName}</span>
+                  </div>
+                  <div className="grid grid-cols-2">
+                    <span className="text-muted-foreground">Gender:</span>
+                    <span>{data.gender}</span>
+                  </div>
+                  <div className="grid grid-cols-2">
+                    <span className="text-muted-foreground">Age:</span>
+                    <span>{data.age}</span>
+                  </div>
+                  <div className="grid grid-cols-2">
+                    <span className="text-muted-foreground">Nationality:</span>
+                    <span>{data.nationality}</span>
+                  </div>
+                  <div className="grid grid-cols-2">
+                    <span className="text-muted-foreground">Email:</span>
+                    <span>{data.email}</span>
+                  </div>
+                  <div className="grid grid-cols-2">
+                    <span className="text-muted-foreground">Phone:</span>
+                    <span>{data.phoneNumber}</span>
+                  </div>
+                </div>
+
+                <h3 className="text-lg font-semibold mt-6 mb-4">Location</h3>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2">
+                    <span className="text-muted-foreground">Region:</span>
+                    <span>{data.region}</span>
+                  </div>
+                  <div className="grid grid-cols-2">
+                    <span className="text-muted-foreground">Zone:</span>
+                    <span>{data.zone}</span>
+                  </div>
+                  <div className="grid grid-cols-2">
+                    <span className="text-muted-foreground">Woreda:</span>
+                    <span>{data.woreda}</span>
+                  </div>
+                  <div className="grid grid-cols-2">
+                    <span className="text-muted-foreground">Kebele:</span>
+                    <span>{data.kebele}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Affiliation Details</h3>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2">
+                    <span className="text-muted-foreground">Institution:</span>
+                    <span>{data.institution || "N/A"}</span>
+                  </div>
+                  <div className="grid grid-cols-2">
+                    <span className="text-muted-foreground">Department:</span>
+                    <span>{data.department || "N/A"}</span>
+                  </div>
+                  <div className="grid grid-cols-2">
+                    <span className="text-muted-foreground">Designation:</span>
+                    <span>{data.designation || "N/A"}</span>
+                  </div>
+                  <div className="grid grid-cols-2">
+                    <span className="text-muted-foreground">Institution Address:</span>
+                    <span>{data.institutionAddress || "N/A"}</span>
+                  </div>
+                </div>
+
+                <h3 className="text-lg font-semibold mt-6 mb-4">Education & Qualifications</h3>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2">
+                    <span className="text-muted-foreground">Highest Degree:</span>
+                    <span>{data.highestDegree || "N/A"}</span>
+                  </div>
+                  <div className="grid grid-cols-2">
+                    <span className="text-muted-foreground">University:</span>
+                    <span>{data.university || "N/A"}</span>
+                  </div>
+                  <div className="grid grid-cols-2">
+                    <span className="text-muted-foreground">Completion Year:</span>
+                    <span>{data.completionYear || "N/A"}</span>
+                  </div>
+                  <div className="grid grid-cols-2">
+                    <span className="text-muted-foreground">Specialization:</span>
+                    <span>{data.specialization || "N/A"}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Separator className="my-6" />
+
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Indigenous Knowledge Information</h3>
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2">
+                  <span className="text-muted-foreground">Knowledge Title:</span>
+                  <span>{data.knowledgeTitle}</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2">
+                  <span className="text-muted-foreground">Knowledge Department:</span>
+                  <span>{data.knowledgeDepartment}</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2">
+                  <span className="text-muted-foreground">Sub Category:</span>
+                  <span>{data.subCategory}</span>
+                </div>
+                {data.otherSubCategory && (
+                  <div className="grid grid-cols-1 md:grid-cols-2">
+                    <span className="text-muted-foreground">Other Sub Category:</span>
+                    <span>{data.otherSubCategory}</span>
+                  </div>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-2">
+                  <span className="text-muted-foreground">Interest Areas:</span>
+                  <span>{data.interestAreas}</span>
+                </div>
+              </div>
+            </div>
+
+            {data.fileUrl && (
+              <>
+                <Separator className="my-6" />
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Attached Document</h3>
+                  <div className="flex flex-col space-y-4">
+                    <div className="flex items-center">
+                      <FileText className="h-5 w-5 mr-2 text-blue-500" />
+                      <span>Document File</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="ml-4"
+                        onClick={() => window.open(data.fileUrl, "_blank")}
+                      >
+                        View Document
+                      </Button>
+                    </div>
+                    <div className="border rounded-lg p-4">
+                      <iframe src={data.fileUrl} className="w-full h-[400px]" title="PDF Viewer" />
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

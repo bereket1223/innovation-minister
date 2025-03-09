@@ -46,7 +46,6 @@ function IndigenousTable({
   caption: string
   onViewFile: (url: string) => void
 }) {
-  // Show only essential columns in the table for better UX
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -130,7 +129,6 @@ export function IndigenousTables() {
         const departments = ["indigenous-innovation", "indigenous-research", "indigenous-technology"]
 
         const requests = departments.map(async (dept) => {
-          // Updated URL to use the new route structure
           const response = await fetch(`${baseUrl}/type/${dept}`)
 
           if (!response.ok) {
@@ -138,7 +136,7 @@ export function IndigenousTables() {
           }
 
           const result = await response.json()
-          return result.data || [] // Extract data from ApiResponse format
+          return result.data || []
         })
 
         const [innovationData, researchData, technologyData] = await Promise.all(requests)

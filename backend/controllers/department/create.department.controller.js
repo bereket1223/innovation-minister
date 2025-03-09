@@ -123,18 +123,22 @@ export const deleteDepartmentController = async (req, res) => {
 export const approveDepartmentController = async (req, res) => {
   try {
     const { id } = req.params
-    const approvedDepartment = await approveDepartment(id)
+    // Updated to handle status from request body if provided
+    const status = req.body.status || "approved"
+    const approvedDepartment = await approveDepartment(id, status)
 
     if (!approvedDepartment) {
       return res.status(404).json(new ApiError(404, "Department not found"))
     }
 
-    return res.status(200).json(new ApiResponse(200, approvedDepartment, "Department approved successfully"))
+    return res.status(200).json(new ApiResponse(200, approvedDepartment, "Department status updated successfully"))
   } catch (error) {
     console.error("Error in approveDepartmentController:", error)
     return res
       .status(error.statusCode || 500)
-      .json(new ApiError(error.statusCode || 500, error.message || "Something went wrong while approving department"))
+      .json(
+        new ApiError(error.statusCode || 500, error.message || "Something went wrong while updating department status"),
+      )
   }
 }
 

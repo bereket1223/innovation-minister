@@ -79,14 +79,15 @@ export const deleteDepartment = async (id) => {
   }
 }
 
-export const approveDepartment = async (id) => {
+export const approveDepartment = async (id, status = "approved") => {
   try {
-    const approvedDepartment = await Department.findByIdAndUpdate(id, { status: "approved" }, { new: true })
+    // Updated to accept status parameter with default value of "approved"
+    const updatedDepartment = await Department.findByIdAndUpdate(id, { status }, { new: true })
 
-    return approvedDepartment
+    return updatedDepartment
   } catch (error) {
     console.error("Error in approveDepartment service:", error)
-    throw new ApiError(500, "Something went wrong while approving department")
+    throw new ApiError(500, "Something went wrong while updating department status")
   }
 }
 
