@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Loader2, FileText, Check, ArrowLeft, Trash2, ExternalLink, Download, Eye } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
-import { Sidebar } from "../components/Sidebar"
+import { Sidebar } from "../../admin/components/Sidebar"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -73,14 +73,6 @@ export function IndigenousDetail() {
       fetchData()
     }
   }, [id])
-
-  useEffect(() => {
-    // Automatically show PDF when data is loaded
-    if (data?.fileUrl) {
-      setShowPdf(true)
-      setPdfLoading(true)
-    }
-  }, [data])
 
   const fetchData = async () => {
     try {
@@ -185,6 +177,14 @@ export function IndigenousDetail() {
     }
   }
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+  }
+
   if (loading) {
     return (
       <div className="flex h-screen">
@@ -236,15 +236,6 @@ export function IndigenousDetail() {
         </div>
       </div>
     )
-  }
-
-  // Format date for display
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    })
   }
 
   return (
@@ -458,7 +449,6 @@ export function IndigenousDetail() {
                     src={data.fileUrl}
                     className="w-full h-full border-0"
                     title="PDF Viewer"
-                    sandbox="allow-same-origin allow-scripts allow-forms"
                     onLoad={() => setPdfLoading(false)}
                     onError={() => {
                       setPdfLoading(false)
