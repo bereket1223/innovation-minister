@@ -1,54 +1,124 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useEffect } from "react"
 import Link from "next/link"
-import { useRouter, usePathname, useSearchParams } from "next/navigation"
-import { Users, FileText, Lightbulb, Cpu, LayoutDashboard } from "lucide-react"
+import { usePathname } from "next/navigation"
+import { Home, Database, FileText, Users, Settings, LogOut, Menu, X } from "lucide-react"
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
-export function Sidebar() {
-  const [activeItem, setActiveItem] = useState("dashboard")
-  const router = useRouter()
+interface SidebarProps {
+  className?: string
+}
+
+export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname()
-  const searchParams = useSearchParams()
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-  const menuItems = [
-    { name: "Dashboard", icon: LayoutDashboard, href: "/admin" },
-    { name: "Users", icon: Users, href: "/admin?tab=users" },
-    { name: "Research", icon: FileText, href: "/admin?tab=research" },
-    { name: "Innovation", icon: Lightbulb, href: "/admin?tab=innovation" },
-    { name: "Technology", icon: Cpu, href: "/admin?tab=technology" },
-  ]
-
-  useEffect(() => {
-    const tabParam = searchParams.get("tab")
-    setActiveItem(tabParam || "dashboard")
-  }, [searchParams])
-
-  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    e.preventDefault()
-    router.push(href)
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen)
   }
 
+  const navItems = [
+    {
+      name: "Dashboard",
+      href: "/dashboard",
+      icon: Home,
+    },
+    {
+      name: "Indigenous Knowledge",
+      href: "/indigenous-tables",
+      icon: Database,
+    },
+    {
+      name: "Documents",
+      href: "/documents",
+      icon: FileText,
+    },
+    {
+      name: "Users",
+      href: "/users",
+      icon: Users,
+    },
+    {
+      name: "Settings",
+      href: "/settings",
+      icon: Settings,
+    },
+  ]
+
   return (
-    <div className="bg-gray-800 text-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition duration-200 ease-in-out">
-      <nav>
-        {menuItems.map((item) => (
-          <Link
-            key={item.name}
-            href={item.href}
-            onClick={(e) => handleClick(e, item.href)}
-            className={`block py-2.5 px-4 rounded transition duration-200 ${
-              activeItem === item.name.toLowerCase() ? "bg-gray-700" : "hover:bg-gray-700"
-            }`}
-          >
-            <item.icon className="inline-block mr-2 h-5 w-5" />
-            {item.name}
-          </Link>
-        ))}
-      </nav>
-    </div>
+    <>
+      {/* Mobile Menu Button */}
+      <div className="md:hidden fixed top-4 left-4 z-50">
+        <Button variant="outline" size="icon" onClick={toggleMobileMenu} className="rounded-full">
+          {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </Button>
+      </div>
+
+      {/* Sidebar for mobile */}
+      <div
+        className={cn(
+          "fixed inset-0 z-40 transform transition-transform duration-300 ease-in-out md:hidden",
+          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full",
+        )}
+      >
+        <div className="bg-background h-full w-64 shadow-lg pt-16">
+          <div className="px-4 py-6">
+            <h2 className="text-xl font-bold mb-6 text-center">Indigenous Knowledge</h2>
+            <nav className="space-y-2">
+              {navItems.map((item) => (
+                <Link key={item.href} href={item.href} onClick={() => setIsMobileMenuOpen(false)}>
+                  <div
+                    className={cn(
+                      "flex items-center px-4 py-3 text-sm rounded-md hover:bg-muted",
+                      pathname === item.href ? "bg-muted font-medium" : "",
+                    )}
+                  >
+                    <item.icon className="h-5 w-5 mr-3" />
+                    {item.name}
+                  </div>
+                </Link>
+              ))}
+            </nav>
+            <div className="absolute bottom-8 left-0 right-0 px-4">
+              <Button variant="outline" className="w-full flex items-center justify-center">
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Sidebar for desktop */}
+      <div className={cn("hidden md:block h-screen w-64 border-r bg-background", className)}>
+        <div className="px-4 py-6">
+          <h2 className="text-xl font-bold mb-6 text-center">Indigenous Knowledge</h2>
+          <nav className="space-y-2">
+            {navItems.map((item) => (
+              <Link key={item.href} href={item.href}>
+                <div
+                  className={cn(
+                    "flex items-center px-4 py-3 text-sm rounded-md hover:bg-muted",
+                    pathname === item.href ? "bg-muted font-medium" : "",
+                  )}
+                >
+                  <item.icon className="h-5 w-5 mr-3" />
+                  {item.name}
+                </div>
+              </Link>
+            ))}
+          </nav>
+          <div className="absolute bottom-8 left-0 right-0 px-4">
+            <Button variant="outline" className="w-full flex items-center justify-center">
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
+          </div>
+        </div>
+      </div>
+    </>
   )
 }
 

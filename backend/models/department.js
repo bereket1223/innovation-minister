@@ -5,47 +5,47 @@ const departmentSchema = new mongoose.Schema(
     // Personal Information
     fullName: {
       type: String,
-      required: true,
+      
       trim: true,
     },
     gender: {
       type: String,
-      required: true,
+      
       enum: ["male", "female", "other"],
     },
     age: {
       type: Number,
-      required: true,
+      
     },
     nationality: {
       type: String,
-      required: true,
+      
     },
     region: {
       type: String,
-      required: true,
+      
     },
     zone: {
       type: String,
-      required: true,
+      
     },
     woreda: {
       type: String,
-      required: true,
+      
     },
     kebele: {
       type: String,
-      required: true,
+      
     },
     email: {
       type: String,
-      required: true,
+      
       trim: true,
       lowercase: true,
     },
     phoneNumber: {
       type: String,
-      required: true,
+      
     },
 
     // Affiliation Details (Optional)
@@ -86,17 +86,17 @@ const departmentSchema = new mongoose.Schema(
     // Indigenous Knowledge Information
     knowledgeTitle: {
       type: String,
-      required: true,
+      
       trim: true,
     },
     knowledgeDepartment: {
       type: String,
-      required: true,
+      
       enum: ["Indigenous Research", "Indigenous Technology", "Indigenous Innovation"],
     },
     subCategory: {
       type: String,
-      required: true,
+      
       trim: true,
     },
     otherSubCategory: {
@@ -105,24 +105,24 @@ const departmentSchema = new mongoose.Schema(
     },
     interestAreas: {
       type: String,
-      required: true,
+      
       trim: true,
     },
 
     // Document path and URL
     documentPath: {
       type: String,
-      required: true,
+      
     },
     fileUrl: {
       type: String,
-      required: true,
+      
     },
 
     // Agreement
     agreement: {
       type: Boolean,
-      required: true,
+      
       default: false,
     },
 

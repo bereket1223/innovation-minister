@@ -4,47 +4,29 @@ import { useEffect, useState } from "react"
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
-import { Eye, FileText, Loader2 } from "lucide-react"
+import { Eye, Loader2 } from "lucide-react"
 import Link from "next/link"
+import { toast } from "@/components/ui/use-toast"
+import { Sidebar } from "../components/Sidebar"
 
 interface IndigenousData {
   _id: string
   fullName: string
-  gender: string
-  age: string
-  nationality: string
-  region: string
-  zone: string
-  woreda: string
-  kebele: string
-  email: string
-  phoneNumber: string
-  institution: string
-  department: string
-  designation: string
-  institutionAddress: string
-  highestDegree: string
-  university: string
-  completionYear: string
-  specialization: string
   knowledgeTitle: string
   knowledgeDepartment: string
   subCategory: string
-  otherSubCategory: string
-  interestAreas: string
-  fileUrl: string
-  agreement: boolean
+  fileUrl: string | null
   status: string
 }
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
 
 function IndigenousTable({
   data,
   caption,
-  onViewFile,
 }: {
   data: IndigenousData[]
   caption: string
-  onViewFile: (url: string) => void
 }) {
   return (
     <div className="overflow-x-auto">
@@ -54,7 +36,6 @@ function IndigenousTable({
           <TableRow>
             <TableHead>Full Name</TableHead>
             <TableHead>Knowledge Title</TableHead>
-            <TableHead>Knowledge Department</TableHead>
             <TableHead>Sub Category</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Actions</TableHead>
@@ -66,7 +47,6 @@ function IndigenousTable({
               <TableRow key={item._id}>
                 <TableCell>{item.fullName}</TableCell>
                 <TableCell>{item.knowledgeTitle}</TableCell>
-                <TableCell>{item.knowledgeDepartment}</TableCell>
                 <TableCell>{item.subCategory}</TableCell>
                 <TableCell>
                   <span
@@ -89,19 +69,13 @@ function IndigenousTable({
                         Details
                       </Button>
                     </Link>
-                    {item.fileUrl && (
-                      <Button variant="outline" size="sm" onClick={() => onViewFile(item.fileUrl)}>
-                        <FileText className="h-4 w-4 mr-1" />
-                        File
-                      </Button>
-                    )}
                   </div>
                 </TableCell>
               </TableRow>
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={6} className="text-center">
+              <TableCell colSpan={5} className="text-center">
                 No data available
               </TableCell>
             </TableRow>
@@ -120,16 +94,14 @@ export function IndigenousTables() {
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedFile, setSelectedFile] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const baseUrl = "http://localhost:5000/api/department"
         const departments = ["indigenous-innovation", "indigenous-research", "indigenous-technology"]
 
         const requests = departments.map(async (dept) => {
-          const response = await fetch(`${baseUrl}/type/${dept}`)
+          const response = await fetch(`${API_BASE_URL}/department/type/${dept}`)
 
           if (!response.ok) {
             throw new Error(`Failed to fetch ${dept}: ${response.status} ${response.statusText}`)
@@ -150,36 +122,43 @@ export function IndigenousTables() {
       } catch (err: any) {
         setError(err.message)
         setLoading(false)
+        toast({
+          title: "Error loading data",
+          description: err.message,
+          variant: "destructive",
+        })
       }
     }
 
     fetchData()
   }, [])
 
-  const handleViewFile = (url: string) => {
-    setSelectedFile(url)
-    // Scroll to the PDF viewer
-    setTimeout(() => {
-      document.getElementById("pdf-viewer")?.scrollIntoView({ behavior: "smooth" })
-    }, 100)
-  }
-
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">Loading data...</span>
+      <div className="flex h-screen">
+        <Sidebar />
+        <div className="flex-1 p-8">
+          <div className="flex justify-center items-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="ml-2">Loading data...</span>
+          </div>
+        </div>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
-        <div className="flex">
-          <div className="ml-3">
-            <p className="text-red-700">Error loading data</p>
-            <p className="text-sm text-red-500">{error}</p>
+      <div className="flex h-screen">
+        <Sidebar />
+        <div className="flex-1 p-8">
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+            <div className="flex">
+              <div className="ml-3">
+                <p className="text-red-700">Error loading data</p>
+                <p className="text-sm text-red-500">{error}</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -187,54 +166,35 @@ export function IndigenousTables() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold mb-6">Indigenous Knowledge Database</h1>
+    <div className="flex h-screen">
+      <Sidebar />
+      <div className="flex-1 p-8 overflow-auto">
+        <div className="space-y-8">
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h1 className="text-2xl font-bold mb-6">Indigenous Knowledge Database</h1>
 
-        <Tabs defaultValue="innovation">
-          <TabsList className="mb-4">
-            <TabsTrigger value="innovation">Indigenous Innovation</TabsTrigger>
-            <TabsTrigger value="research">Indigenous Research</TabsTrigger>
-            <TabsTrigger value="technology">Indigenous Technology</TabsTrigger>
-          </TabsList>
+            <Tabs defaultValue="innovation">
+              <TabsList className="mb-4">
+                <TabsTrigger value="innovation">Indigenous Innovation</TabsTrigger>
+                <TabsTrigger value="research">Indigenous Research</TabsTrigger>
+                <TabsTrigger value="technology">Indigenous Technology</TabsTrigger>
+              </TabsList>
 
-          <TabsContent value="innovation">
-            <IndigenousTable
-              data={data.innovation}
-              caption="A list of indigenous innovations."
-              onViewFile={handleViewFile}
-            />
-          </TabsContent>
+              <TabsContent value="innovation">
+                <IndigenousTable data={data.innovation} caption="A list of indigenous innovations." />
+              </TabsContent>
 
-          <TabsContent value="research">
-            <IndigenousTable
-              data={data.research}
-              caption="A list of indigenous research."
-              onViewFile={handleViewFile}
-            />
-          </TabsContent>
+              <TabsContent value="research">
+                <IndigenousTable data={data.research} caption="A list of indigenous research." />
+              </TabsContent>
 
-          <TabsContent value="technology">
-            <IndigenousTable
-              data={data.technology}
-              caption="A list of indigenous technologies."
-              onViewFile={handleViewFile}
-            />
-          </TabsContent>
-        </Tabs>
-      </div>
-
-      {selectedFile && (
-        <div id="pdf-viewer" className="bg-white p-6 rounded-lg shadow-md">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">PDF Document</h2>
-            <Button variant="outline" onClick={() => window.open(selectedFile, "_blank")}>
-              Open in New Tab
-            </Button>
+              <TabsContent value="technology">
+                <IndigenousTable data={data.technology} caption="A list of indigenous technologies." />
+              </TabsContent>
+            </Tabs>
           </div>
-          <iframe src={selectedFile} className="w-full h-[600px] border rounded-lg shadow-md" title="PDF Viewer" />
         </div>
-      )}
+      </div>
     </div>
   )
 }
