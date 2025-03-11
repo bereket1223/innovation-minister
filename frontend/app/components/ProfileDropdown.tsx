@@ -12,12 +12,34 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useRouter } from "next/navigation"
 import { FaUserCircle } from "react-icons/fa"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import toast from "react-hot-toast"
 
-export default function ProfileDropdown() {
+export default function ProfileDropdown({ onProfileClick }) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
+  const [userEmail, setUserEmail] = useState("")
+
+  useEffect(() => {
+    // Fetch user email when component mounts
+    fetchUserEmail()
+  }, [])
+
+  const fetchUserEmail = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/api/user", {
+        credentials: "include",
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setUserEmail(data.email)
+      } else {
+        console.error("Failed to fetch user email")
+      }
+    } catch (error) {
+      console.error("Error fetching user email:", error)
+    }
+  }
 
   const handleLogout = async () => {
     try {
@@ -59,13 +81,13 @@ export default function ProfileDropdown() {
       >
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">Username</p>
-            <p className="text-xs leading-none text-muted-foreground">user@example.com</p>
+            <p className="text-sm font-medium leading-none">User Profile</p>
+            <p className="text-xs leading-none text-muted-foreground">{userEmail}</p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem>Profile</DropdownMenuItem>
+          <DropdownMenuItem onClick={onProfileClick}>Profile</DropdownMenuItem>
           <DropdownMenuItem>Settings</DropdownMenuItem>
           <DropdownMenuItem>Notifications</DropdownMenuItem>
         </DropdownMenuGroup>

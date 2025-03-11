@@ -27,7 +27,7 @@ export default function LoginForm() {
 
       if (response.ok) {
         toast.success("Login successful!");
-        router.push("/admin");
+        router.push("/dashboard");
       } else {
         const data = await response.json();
         setErrorMessage(data.message || "Login failed. Please try again.");

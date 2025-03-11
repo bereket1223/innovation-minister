@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Eye, Loader2, ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { toast } from "@/components/ui/use-toast"
-import { Sidebar } from "../components/sidebar"
+import { Sidebar } from "./Sidebar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface IndigenousData {
