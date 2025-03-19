@@ -13,12 +13,13 @@ const PORT = process.env.PORT || 5000;
 
 connectDB();
 
+// Configure CORS
 app.use(cors({
-  origin: 'http://localhost:3000',
-  methods: 'GET,POST,PUT,DELETE',
-  credentials: true
-}));
-
+  origin: ["http://localhost:3000", "http://127.0.0.1:3000"], // Add your frontend URL
+  credentials: true, // Allow cookies to be sent
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}))
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

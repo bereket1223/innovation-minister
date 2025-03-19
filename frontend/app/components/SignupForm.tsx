@@ -45,7 +45,7 @@ export default function SignUpForm() {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/user/createUser", {
+      const response = await fetch("http://localhost:5000/api/user/register", {
         method: "POST",
         body: formData,
       })

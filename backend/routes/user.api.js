@@ -1,15 +1,38 @@
-import express from "express";
-import { createUser, login, logout, readUser, updateUser, deleteUser } from "../controllers/user/index.js";
-import multer from "multer";
+import express from "express"
+import {
+  createUserController,
+  loginUserController,
+  logoutUserController,
+  updateUserProfileController,
+  getAllUsersController,
+  getUserByIdController,
+  deleteUserController,
+} from "../controllers/user/create.user.controller.js"
+import { verifyToken } from "../middleware/auth.js"
+import { uploadProfile, handleMulterError } from "../middleware/multer.middleware.js"
 
-const upload = multer({ dest: "uploads/" })
-const router = express.Router();
+const router = express.Router()
 
-router.post("/createUser", upload.single("profilePicture"), createUser)
-router.post("/login", login)
-router.post("/logout", logout)
-router.get("/:id", readUser);
-router.put("/:id", updateUser);
-router.delete("/:id", deleteUser);
+// Public routes
+router.post("/register", uploadProfile.single("profilePicture"), handleMulterError, createUserController)
+router.post("/login", loginUserController)
+router.post("/logout", logoutUserController)
 
-export default router;
+// Protected routes
+router.put(
+  "/profile",
+  verifyToken,
+  uploadProfile.single("profilePicture"),
+  handleMulterError,
+  updateUserProfileController,
+)
+
+// User retrieval routes
+router.get("/", verifyToken, getAllUsersController)
+router.get("/:id", verifyToken, getUserByIdController)
+
+// User deletion route
+router.delete("/:id", verifyToken, deleteUserController)
+
+export default router
+
