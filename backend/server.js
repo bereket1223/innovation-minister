@@ -5,6 +5,8 @@ import connectDB from './utils/db.js';
 import userRoutes from './routes/user.api.js';
 import departmentRoutes from './routes/department.api.js';
 import cookieParser from "cookie-parser"
+import sheetOneRoutes from "./routes/sheetOne.api.js"
+import sheetTwoRoutes from "./routes/sheetTwo.api.js"
 
 dotenv.config();
 const app = express();
@@ -30,6 +32,9 @@ app.use("/uploads", express.static("uploads"))
 // Routes
 app.use('/api/user', userRoutes);
 app.use('/api/department', departmentRoutes);
+app.use("/api/sheet-one", sheetOneRoutes)
+app.use("/api/sheet-two", sheetTwoRoutes)
+
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {

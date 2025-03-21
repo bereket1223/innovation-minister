@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useEffect, useState } from "react"
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -61,12 +63,27 @@ function IndigenousTable({
   const [currentPage, setCurrentPage] = useState(1)
   const [timePeriod, setTimePeriod] = useState("all")
   const rowsPerPage = 10
+  const [searchTerm, setSearchTerm] = useState("")
+
+  // Handle search
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value)
+    setCurrentPage(1) // Reset to first page when searching
+  }
 
   // Sort data by createdAt (most recent first)
   const sortedData = [...data].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
-  // Filter data by time period
-  const filteredData = timePeriod === "all" ? sortedData : filterDataByTimePeriod(sortedData, timePeriod)
+  // Filter data by time period and search term
+  const filteredData = sortedData
+    .filter((item) => (timePeriod === "all" ? true : filterDataByTimePeriod([item], timePeriod).length > 0))
+    .filter(
+      (item) =>
+        searchTerm === "" ||
+        item.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.knowledgeTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.subCategory.toLowerCase().includes(searchTerm.toLowerCase()),
+    )
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredData.length / rowsPerPage)
@@ -102,25 +119,53 @@ function IndigenousTable({
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
         <div className="text-sm text-muted-foreground">
           Showing {filteredData.length > 0 ? startIndex + 1 : 0} to{" "}
           {Math.min(startIndex + rowsPerPage, filteredData.length)} of {filteredData.length} entries
         </div>
-        <div className="flex items-center space-x-2">
-          <span className="text-sm">Filter by:</span>
-          <Select value={timePeriod} onValueChange={setTimePeriod}>
-            <SelectTrigger className="w-[120px]">
-              <SelectValue placeholder="Time period" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All time</SelectItem>
-              <SelectItem value="day">Today</SelectItem>
-              <SelectItem value="week">This week</SelectItem>
-              <SelectItem value="month">This month</SelectItem>
-              <SelectItem value="year">This year</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={handleSearch}
+              className="pl-3 pr-10 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+            <button className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="lucide lucide-search"
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.3-4.3"></path>
+              </svg>
+            </button>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="text-sm">Filter by:</span>
+            <Select value={timePeriod} onValueChange={setTimePeriod}>
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="Time period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All time</SelectItem>
+                <SelectItem value="day">Today ({filterDataByTimePeriod(sortedData, "day").length})</SelectItem>
+                <SelectItem value="week">This week ({filterDataByTimePeriod(sortedData, "week").length})</SelectItem>
+                <SelectItem value="month">This month ({filterDataByTimePeriod(sortedData, "month").length})</SelectItem>
+                <SelectItem value="year">This year ({filterDataByTimePeriod(sortedData, "year").length})</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 

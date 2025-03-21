@@ -1,4 +1,6 @@
 import jwt from "jsonwebtoken"
+import { getUserById } from "../service/user/create.user.service.js"
+import { ApiError } from "../utils/ApiError.js"
 
 export const verifyToken = (req, res, next) => {
   try {
@@ -34,9 +36,17 @@ export const verifyToken = (req, res, next) => {
 
 export const isAdmin = async (req, res, next) => {
   try {
-    // Check if user exists and has admin role
-    // This assumes your User model has an isAdmin or role field
-    if (!req.user || !req.user.isAdmin) {
+    console.log(req.user)
+    if (!req.user) {
+      return res.status(403).json(new ApiError(403, "Access denied. Admin privileges required."))
+    }
+
+    const { id  } = req.user
+    const user = await getUserById(id)
+    console.log(user)
+    const isAdmin = user.role === "admin"
+
+    if (!isAdmin) {
       return res.status(403).json(new ApiError(403, "Access denied. Admin privileges required."))
     }
     

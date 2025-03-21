@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Sidebar } from "@/app/admin/components/Sidebar"
 import { Loader2, Database, FileText, Users } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
+import { BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
 
@@ -18,6 +19,9 @@ interface DashboardStats {
   rejected: number
 }
 
+// Colors for charts
+const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8"]
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
@@ -29,8 +33,19 @@ export default function DashboardPage() {
         setLoading(true)
         const departments = ["indigenous-innovation", "indigenous-research", "indigenous-technology"]
 
-        const requests = departments.map(async (dept) => {
-          const response = await fetch(`${API_BASE_URL}/department/type/${dept}`)
+        // Get auth token from localStorage or your auth context
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token") || ""
+
+        const headers = {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }
+
+        // Fetch indigenous knowledge data
+        const deptRequests = departments.map(async (dept) => {
+          const response = await fetch(`${API_BASE_URL}/department/type/${dept}`, {
+            headers,
+          })
 
           if (!response.ok) {
             throw new Error(`Failed to fetch ${dept}: ${response.status} ${response.statusText}`)
@@ -40,7 +55,7 @@ export default function DashboardPage() {
           return result.data || []
         })
 
-        const [innovationData, researchData, technologyData] = await Promise.all(requests)
+        const [innovationData, researchData, technologyData] = await Promise.all(deptRequests)
 
         // Calculate statistics
         const allData = [...innovationData, ...researchData, ...technologyData]
@@ -105,6 +120,20 @@ export default function DashboardPage() {
     )
   }
 
+  // Data for pie chart
+  const pieData = [
+    { name: "Innovation", value: stats?.innovation || 0 },
+    { name: "Research", value: stats?.research || 0 },
+    { name: "Technology", value: stats?.technology || 0 },
+  ]
+
+  // Data for status bar chart
+  const statusData = [
+    { name: "Pending", value: stats?.pending || 0 },
+    { name: "Approved", value: stats?.approved || 0 },
+    { name: "Rejected", value: stats?.rejected || 0 },
+  ]
+
   return (
     <div className="flex h-screen">
       <Sidebar />
@@ -123,6 +152,27 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-between">
                     <div className="text-4xl font-bold">{stats?.total || 0}</div>
                     <Database className="h-8 w-8 text-primary" />
+                  </div>
+                  <div className="h-32 mt-4">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={30}
+                          outerRadius={60}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        >
+                          {pieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
                   </div>
                 </CardContent>
               </Card>
@@ -209,6 +259,43 @@ export default function DashboardPage() {
                     <div className="h-8 w-8 rounded-full bg-red-200 flex items-center justify-center">
                       <Users className="h-5 w-5 text-red-700" />
                     </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Status overview chart */}
+            <div className="mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Status Overview</CardTitle>
+                  <CardDescription>Distribution of entry statuses</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={statusData}>
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="value" fill="#8884d8">
+                          {statusData.map((entry, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={
+                                index === 0
+                                  ? "#f59e0b"
+                                  : // yellow for pending
+                                    index === 1
+                                    ? "#10b981"
+                                    : // green for approved
+                                      "#ef4444" // red for rejected
+                              }
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
                 </CardContent>
               </Card>

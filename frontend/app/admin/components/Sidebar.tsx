@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Database, FileText, Users, Settings, LogOut, Menu, X } from "lucide-react"
+import { Home, Database, FileText, Users, Settings, LogOut, Menu, X, Table } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -29,6 +29,16 @@ export function Sidebar({ className }: SidebarProps) {
       name: "Indigenous Knowledge",
       href: "/indigenous-tables",
       icon: Database,
+    },
+    {
+      name: "Sheet One",
+      href: "/sheets/sheet-one",
+      icon: Table,
+    },
+    {
+      name: "Sheet Two",
+      href: "/sheets/sheet-two",
+      icon: Table,
     },
     {
       name: "Documents",
