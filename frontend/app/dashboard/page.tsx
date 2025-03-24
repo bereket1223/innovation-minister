@@ -185,7 +185,7 @@ export default function Dashboard() {
                   <TabsList className="grid grid-cols-3 mb-4">
                     <TabsTrigger value="all">All</TabsTrigger>
                     <TabsTrigger value="approved">Approved</TabsTrigger>
-                    <TabsTrigger value="pending">Pending</TabsTrigger>
+                    <TabsTrigger value="pending">Pendingggg</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="all" className="mt-0">
