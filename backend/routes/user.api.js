@@ -8,7 +8,7 @@ import {
   getUserByIdController,
   deleteUserController,
 } from "../controllers/user/create.user.controller.js"
-import { isAdmin, verifyToken } from "../middleware/auth.js"
+import { verifyToken } from "../middleware/auth.js"
 import { uploadProfile, handleMulterError } from "../middleware/multer.middleware.js"
 
 const router = express.Router()
@@ -28,7 +28,7 @@ router.put(
 )
 
 // User retrieval routes
-router.get("/", verifyToken,isAdmin, getAllUsersController)
+router.get("/", verifyToken, getAllUsersController)
 router.get("/:id", verifyToken, getUserByIdController)
 
 // User deletion route

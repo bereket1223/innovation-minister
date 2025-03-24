@@ -5,18 +5,21 @@ export default function Blog() {
   const blogPosts = [
     {
       id: 1,
-      title: "Getting Started with React",
-      excerpt: "Learn the basics of React and start building your first application.",
+      title: "Innovation Ministry Unveils National Indigenous Knowledge Strategy",
+      excerpt:
+        "The Ethiopian Ministry of Innovation and Technology has launched a comprehensive strategy to promote and preserve indigenous knowledge systems across the country.",
     },
     {
       id: 2,
-      title: "Mastering Tailwind CSS",
-      excerpt: "Discover advanced techniques to create stunning designs with Tailwind CSS.",
+      title: "Documenting Ethiopia’s Indigenous Agricultural Practices",
+      excerpt:
+        "A new initiative aims to digitally archive traditional farming methods and tools, contributing to sustainable development and cultural preservation.",
     },
     {
       id: 3,
-      title: "The Power of Next.js",
-      excerpt: "Explore the features that make Next.js a powerful framework for React applications.",
+      title: "Integrating Indigenous Wisdom with Modern Research",
+      excerpt:
+        "Experts call for a collaborative approach that combines indigenous knowledge with scientific research to address local challenges more effectively.",
     },
   ]
 
@@ -46,4 +49,3 @@ export default function Blog() {
     </div>
   )
 }
-

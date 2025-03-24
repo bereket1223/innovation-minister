@@ -1,93 +1,35 @@
 "use client"
 
-import type React from "react"
-
+import React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { ChevronDown, ChevronUp, Briefcase, BarChart2, Cpu, FileIcon, ExternalLink } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  Lightbulb,
+  BookOpen,
+  Cpu,
+  Utensils,
+  Scissors,
+  BookMarked,
+  Star,
+  Building,
+  Swords,
+  Music,
+  Home,
+  GraduationCap,
+  Shirt,
+  Stethoscope,
+  PlusCircle,
+} from "lucide-react"
 import Sidebar from "../components/Sidebar"
 import ProfileDropdown from "../components/ProfileDropdown"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-
-interface ServiceCardProps {
-  name: string
-  description: string
-  icon: React.ElementType
-  options: { title: string; description: string; image: string }[]
-}
-
-function ServiceCard({ name, description, icon: Icon, options }: ServiceCardProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [selectedOption, setSelectedOption] = useState<string | null>(null)
-  const router = useRouter()
-
-  const handleApply = (option: string) => {
-    router.push(`/form?service=${name}&option=${option}`)
-  }
-
-  return (
-    <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg">
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <CollapsibleTrigger asChild>
-          <CardHeader className="cursor-pointer space-y-1 transition-colors duration-200 hover:bg-slate-50">
-            <div className="flex items-center space-x-2">
-              <Icon className="h-6 w-6 text-indigo-500" />
-              <CardTitle className="text-xl">{name}</CardTitle>
-            </div>
-            <CardDescription className="text-sm text-gray-600">{description}</CardDescription>
-            <div className="flex justify-end">
-              {isOpen ? (
-                <ChevronUp className="h-4 w-4 text-gray-500" />
-              ) : (
-                <ChevronDown className="h-4 w-4 text-gray-500" />
-              )}
-            </div>
-          </CardHeader>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <CardContent>
-            <div className="space-y-4 mt-2">
-              {options.map((option, index) => (
-                <div key={index} className="rounded-lg border border-gray-200 overflow-hidden">
-                  <div
-                    className="flex justify-between items-center p-3 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors duration-200"
-                    onClick={() => setSelectedOption(selectedOption === option.title ? null : option.title)}
-                  >
-                    <span className="font-medium">{option.title}</span>
-                    <ChevronDown
-                      className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${selectedOption === option.title ? "rotate-180" : ""}`}
-                    />
-                  </div>
-
-                  {selectedOption === option.title && (
-                    <div className="p-4 bg-white">
-                      <img
-                        src={option.image || "/placeholder.svg"}
-                        alt={option.title}
-                        className="w-full h-48 object-cover rounded-lg mb-4"
-                      />
-                      <h3 className="text-lg font-semibold mb-2">{option.title}</h3>
-                      <p className="text-sm text-gray-600 mb-4">{option.description}</p>
-                      <Button className="w-full" onClick={() => handleApply(option.title)}>
-                        Apply
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </CollapsibleContent>
-      </Collapsible>
-    </Card>
-  )
-}
+import { Input } from "@/components/ui/input"
 
 interface KnowledgeEntry {
-  fullName: string
   knowledgeTitle: string
   knowledgeDepartment: string
   subCategory: string
@@ -96,25 +38,69 @@ interface KnowledgeEntry {
   createdAt: string
 }
 
+// Define subcategories once and reuse
+const subcategories = [
+  { title: "Food and Beverages", icon: Utensils },
+  { title: "Handicraft", icon: Scissors },
+  { title: "Scriptures", icon: BookMarked },
+  { title: "Astronomy", icon: Star },
+  { title: "Construction", icon: Building },
+  { title: "Conflict Resolution", icon: Swords },
+  { title: "Entertainment", icon: Music },
+  { title: "Traditional House Building", icon: Home },
+  { title: "Education System", icon: GraduationCap },
+  { title: "Clothing Industry", icon: Shirt },
+  { title: "Philosophy", icon: BookOpen },
+  { title: "Traditional Medicine", icon: Stethoscope },
+  { title: "Agriculture", icon: Lightbulb },
+]
+
 export default function Dashboard() {
-  const [isOpen, setIsOpen] = useState(false)
+  const router = useRouter()
+  const [sidebarOpen, setSidebarOpen] = useState(true)
   const [showProfile, setShowProfile] = useState(false)
   const [knowledgeData, setKnowledgeData] = useState<KnowledgeEntry[]>([])
+  const [activeTab, setActiveTab] = useState("all")
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
   const handleProfileClick = async () => {
-    try {
-      const response = await fetch("http://localhost:5000/api/user/knowledge", {
-        credentials: "include",
-      })
-      if (response.ok) {
-        const data = await response.json()
-        setKnowledgeData(data)
-        setShowProfile(true)
-      } else {
-        console.error("Failed to fetch knowledge data")
-      }
-    } catch (error) {
-      console.error("Error fetching knowledge data:", error)
+    // Mock data for demonstration
+    const mockData: KnowledgeEntry[] = [
+      {
+        knowledgeTitle: "Traditional Coffee Ceremony",
+        knowledgeDepartment: "Indigenous Innovation",
+        subCategory: "Food and Beverages",
+        fileUrl: null,
+        status: "Approved",
+        createdAt: new Date().toISOString(),
+      },
+      {
+        knowledgeTitle: "Medicinal Plants of Ethiopia",
+        knowledgeDepartment: "Indigenous Research",
+        subCategory: "Traditional Medicine",
+        fileUrl: null,
+        status: "Pending",
+        createdAt: new Date().toISOString(),
+      },
+    ]
+
+    setKnowledgeData(mockData)
+    setShowProfile(true)
+  }
+
+  const handleRegister = (category: string, subcategory: string) => {
+    // Store the selected category and subcategory in localStorage
+    localStorage.setItem("selectedCategory", category)
+    localStorage.setItem("selectedSubcategory", subcategory)
+    router.push("/form")
+  }
+
+  const handleNavigate = (path: string) => {
+    if (path === "/profile") {
+      handleProfileClick()
+    } else {
+      router.push(path)
     }
   }
 
@@ -126,145 +112,343 @@ export default function Dashboard() {
     })
   }
 
-  const services = [
+  // 3 main categories with the same 13 subcategories
+  const categories = [
     {
-      name: "Consulting Services",
-      description: "Expert guidance and personalized solutions to help your business grow.",
-      icon: Briefcase,
-      options: [
-        { title: "Strategy Consulting", description: "Develop a winning business strategy", image: "/strategy.jpg" },
-        { title: "Financial Advisory", description: "Optimize your financial performance", image: "/finance.jpg" },
-        {
-          title: "Operations Consulting",
-          description: "Streamline your business operations",
-          image: "/operations.jpg",
-        },
-      ],
+      name: "Indigenous Innovation",
+      description: "Traditional Ethiopian innovations",
+      icon: Lightbulb,
+      image: "/innovation.jpg",
+      color: "from-blue-600 to-blue-800",
+      subcategories: subcategories,
     },
     {
-      name: "Management Solutions",
-      description: "Comprehensive services to optimize workflows and improve efficiency.",
-      icon: BarChart2,
-      options: [
-        {
-          title: "Project Management",
-          description: "Ensure project success with our expert management",
-          image: "/project.jpg",
-        },
-        {
-          title: "Change Management",
-          description: "Navigate organizational changes effectively",
-          image: "/change.jpg",
-        },
-        { title: "Risk Management", description: "Identify and mitigate potential risks", image: "/risk.jpg" },
-      ],
+      name: "Indigenous Research",
+      description: "Ethiopian knowledge systems",
+      icon: BookOpen,
+      image: "/research.jpg",
+      color: "from-green-600 to-green-800",
+      subcategories: subcategories,
     },
     {
-      name: "Technology Services",
-      description: "Cutting-edge solutions to enhance your technical capabilities.",
+      name: "Indigenous Technology",
+      description: "Traditional tools and systems",
       icon: Cpu,
-      options: [
-        { title: "Web Development", description: "Create stunning and functional websites", image: "/web.jpg" },
-        { title: "Cloud Solutions", description: "Harness the power of cloud computing", image: "/cloud.jpg" },
-        { title: "Cybersecurity", description: "Protect your digital assets from threats", image: "/security.jpg" },
-      ],
+      image: "/technology.jpg",
+      color: "from-purple-600 to-purple-800",
+      subcategories: subcategories,
     },
   ]
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      <Sidebar isOpen={isOpen} toggleSidebar={() => setIsOpen(!isOpen)} />
+    <div className="flex h-screen bg-gray-50">
+      <Sidebar isOpen={sidebarOpen} toggleSidebar={() => setSidebarOpen(!sidebarOpen)} onNavigate={handleNavigate} />
 
-      <div className="flex-grow overflow-y-auto p-6 md:p-8 bg-gradient-to-br from-gray-100 to-gray-200">
+      <div
+        className={`flex-grow overflow-y-auto p-4 md:p-6 ${sidebarOpen ? "md:ml-64" : ""} transition-all duration-300`}
+      >
         <div className="max-w-7xl mx-auto">
-          <div className="flex justify-end mb-4">
-            <ProfileDropdown onProfileClick={handleProfileClick} />
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <div className="flex items-center">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="mr-2 text-blue-800 hover:bg-blue-50"
+              >
+                <Lightbulb className="h-5 w-5" />
+              </Button>
+              <h1 className="text-2xl md:text-3xl font-bold text-blue-900">Indigenous Knowledge</h1>
+            </div>
+
+            <div className="flex items-center space-x-2 w-full md:w-auto">
+              <div className="relative flex-grow md:flex-grow-0 md:w-64">
+                <Input
+                  type="search"
+                  placeholder="Search knowledge..."
+                  className="pl-4 border-blue-200 focus:border-blue-300 focus:ring-blue-300 w-full"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <ProfileDropdown onProfileClick={handleProfileClick} />
+            </div>
           </div>
 
           {showProfile ? (
-            <Card className="mb-8">
-              <CardHeader>
-                <CardTitle>Knowledge Entries</CardTitle>
-                <CardDescription>Your submitted knowledge entries and their current status</CardDescription>
+            <Card className="mb-6 bg-white border-0 shadow-md overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-blue-800 to-blue-900 text-white py-4">
+                <CardTitle>My Knowledge Entries</CardTitle>
               </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Full Name</TableHead>
-                      <TableHead>Knowledge Title</TableHead>
-                      <TableHead>Department</TableHead>
-                      <TableHead>Sub-Category</TableHead>
-                      <TableHead>File</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Created At</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {knowledgeData.map((entry, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{entry.fullName}</TableCell>
-                        <TableCell>{entry.knowledgeTitle}</TableCell>
-                        <TableCell>{entry.knowledgeDepartment}</TableCell>
-                        <TableCell>{entry.subCategory}</TableCell>
-                        <TableCell>
-                          {entry.fileUrl ? (
-                            <a
-                              href={entry.fileUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center text-blue-500 hover:text-blue-700"
-                            >
-                              <FileIcon className="w-4 h-4 mr-1" />
-                              View File
-                              <ExternalLink className="w-3 h-3 ml-1" />
-                            </a>
-                          ) : (
-                            "No file"
+              <CardContent className="p-4">
+                <Tabs defaultValue="all" className="mb-4" onValueChange={setActiveTab}>
+                  <TabsList className="grid grid-cols-3 mb-4">
+                    <TabsTrigger value="all">All</TabsTrigger>
+                    <TabsTrigger value="approved">Approved</TabsTrigger>
+                    <TabsTrigger value="pending">Pending</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="all" className="mt-0">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Title</TableHead>
+                          <TableHead>Category</TableHead>
+                          <TableHead>Sub-Category</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Date</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {knowledgeData.length > 0 ? (
+                          knowledgeData.map((entry, index) => (
+                            <TableRow key={index}>
+                              <TableCell>{entry.knowledgeTitle}</TableCell>
+                              <TableCell>{entry.knowledgeDepartment}</TableCell>
+                              <TableCell>{entry.subCategory}</TableCell>
+                              <TableCell>
+                                <Badge
+                                  className={`${
+                                    entry.status === "Approved"
+                                      ? "bg-blue-100 text-blue-800"
+                                      : "bg-amber-100 text-amber-800"
+                                  }`}
+                                >
+                                  {entry.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>{formatDate(entry.createdAt)}</TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-center py-4">
+                              No entries found. Start by registering your indigenous knowledge.
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TabsContent>
+
+                  {/* Filter tabs by status */}
+                  {["approved", "pending"].map((status) => (
+                    <TabsContent key={status} value={status} className="mt-0">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Title</TableHead>
+                            <TableHead>Category</TableHead>
+                            <TableHead>Sub-Category</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Date</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {knowledgeData
+                            .filter((entry) => entry.status.toLowerCase() === status)
+                            .map((entry, index) => (
+                              <TableRow key={index}>
+                                <TableCell>{entry.knowledgeTitle}</TableCell>
+                                <TableCell>{entry.knowledgeDepartment}</TableCell>
+                                <TableCell>{entry.subCategory}</TableCell>
+                                <TableCell>
+                                  <Badge
+                                    className={`${
+                                      entry.status === "Approved"
+                                        ? "bg-blue-100 text-blue-800"
+                                        : "bg-amber-100 text-amber-800"
+                                    }`}
+                                  >
+                                    {entry.status}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>{formatDate(entry.createdAt)}</TableCell>
+                              </TableRow>
+                            ))}
+                          {knowledgeData.filter((entry) => entry.status.toLowerCase() === status).length === 0 && (
+                            <TableRow>
+                              <TableCell colSpan={5} className="text-center py-4">
+                                No {status} entries found.
+                              </TableCell>
+                            </TableRow>
                           )}
-                        </TableCell>
-                        <TableCell>
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              entry.status === "Approved"
-                                ? "bg-green-100 text-green-800"
-                                : entry.status === "Pending"
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : "bg-red-100 text-red-800"
-                            }`}
-                          >
-                            {entry.status}
-                          </span>
-                        </TableCell>
-                        <TableCell>{formatDate(entry.createdAt)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                        </TableBody>
+                      </Table>
+                    </TabsContent>
+                  ))}
+                </Tabs>
+
+                <div className="flex justify-end mt-4">
+                  <Button onClick={() => setShowProfile(false)} className="bg-blue-700 hover:bg-blue-800 text-white">
+                    Back to Dashboard
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ) : (
             <>
-              <section className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl shadow-xl text-white p-8 mb-8">
-                <h1 className="text-4xl md:text-5xl font-bold mb-4">Welcome to Our Service Portal</h1>
-                <p className="text-xl md:text-2xl opacity-90">
-                  Explore our range of services designed to elevate your business. Select a service, choose an option,
-                  and embark on your journey to success!
-                </p>
-              </section>
-
-              <h2 className="text-3xl font-bold mb-6 text-gray-800">Available Services</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {services.map((service, index) => (
-                  <ServiceCard
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                {categories.map((category, index) => (
+                  <Card
                     key={index}
-                    name={service.name}
-                    description={service.description}
-                    icon={service.icon}
-                    options={service.options}
-                  />
+                    className="bg-white shadow-md overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg border-0"
+                    onClick={() => setSelectedCategory(selectedCategory === category.name ? null : category.name)}
+                  >
+                    <div className={`relative h-32 w-full overflow-hidden bg-gradient-to-r ${category.color}`}>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <category.icon className="h-16 w-16 text-white opacity-20" />
+                      </div>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-center">
+                          <h3 className="text-xl font-bold text-white">{category.name}</h3>
+                          <p className="text-white/80 text-sm mt-1">{category.description}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <CardFooter className="p-3 flex justify-between items-center bg-white">
+                      <span className="text-sm text-gray-500">{category.subcategories.length} subcategories</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-blue-700 hover:bg-blue-50 p-0 h-8 w-8 rounded-full"
+                      >
+                        <PlusCircle className="h-5 w-5" />
+                      </Button>
+                    </CardFooter>
+                  </Card>
                 ))}
               </div>
+
+              {selectedCategory ? (
+                <div id="register" className="mb-6 animate-fadeIn">
+                  <Card className="bg-white shadow-md overflow-hidden border-0">
+                    <CardHeader
+                      className={`bg-gradient-to-r ${categories.find((c) => c.name === selectedCategory)?.color} text-white py-4`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          {categories.find((c) => c.name === selectedCategory)?.icon && (
+                            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/20">
+                              {React.createElement(
+                                categories.find((c) => c.name === selectedCategory)?.icon as React.ElementType,
+                                { className: "h-4 w-4 text-white" },
+                              )}
+                            </div>
+                          )}
+                          <CardTitle>{selectedCategory}</CardTitle>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-white hover:bg-white/20"
+                          onClick={() => setSelectedCategory(null)}
+                        >
+                          View All
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                        {categories
+                          .find((c) => c.name === selectedCategory)
+                          ?.subcategories.map((subcategory, idx) => (
+                            <Card
+                              key={idx}
+                              className="border border-gray-100 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer"
+                              onClick={() => handleRegister(selectedCategory, subcategory.title)}
+                            >
+                              <CardContent className="p-3 flex flex-col items-center text-center">
+                                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-700 mb-2">
+                                  <subcategory.icon className="h-6 w-6" />
+                                </div>
+                                <h5 className="font-medium text-sm text-gray-800">{subcategory.title}</h5>
+                              </CardContent>
+                            </Card>
+                          ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+                  {subcategories.map((subcategory, idx) => (
+                    <Card
+                      key={idx}
+                      className="bg-white shadow-sm hover:shadow-md transition-all border border-gray-100"
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-700">
+                            <subcategory.icon className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <h5 className="font-semibold text-gray-800">{subcategory.title}</h5>
+                          </div>
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {categories.map((category, catIdx) => (
+                            <Badge
+                              key={catIdx}
+                              className={`cursor-pointer hover:opacity-80 ${
+                                category.name === "Indigenous Innovation"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : category.name === "Indigenous Research"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-purple-100 text-purple-800"
+                              }`}
+                              onClick={() => handleRegister(category.name, subcategory.title)}
+                            >
+                              {category.name.split(" ")[1]}
+                            </Badge>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+
+              <Card className="bg-white shadow-md overflow-hidden border-0">
+                <div className="grid md:grid-cols-3">
+                  {categories.map((category, idx) => (
+                    <div
+                      key={idx}
+                      className={`p-4 ${idx === 0 ? "bg-blue-50" : idx === 1 ? "bg-green-50" : "bg-purple-50"}`}
+                    >
+                      <div className="flex items-center space-x-2 mb-3">
+                        <category.icon
+                          className={`h-5 w-5 ${
+                            idx === 0 ? "text-blue-700" : idx === 1 ? "text-green-700" : "text-purple-700"
+                          }`}
+                        />
+                        <h3
+                          className={`font-bold ${
+                            idx === 0 ? "text-blue-900" : idx === 1 ? "text-green-900" : "text-purple-900"
+                          }`}
+                        >
+                          {category.name}
+                        </h3>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-3">{category.description}</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={`w-full ${
+                          idx === 0
+                            ? "border-blue-300 text-blue-700 hover:bg-blue-100"
+                            : idx === 1
+                              ? "border-green-300 text-green-700 hover:bg-green-100"
+                              : "border-purple-300 text-purple-700 hover:bg-purple-100"
+                        }`}
+                        onClick={() => setSelectedCategory(category.name)}
+                      >
+                        Explore
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </Card>
             </>
           )}
         </div>

@@ -3,7 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { useState } from "react"
-
+import logo from "../../public/logopng.png"
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
@@ -18,11 +18,11 @@ export default function Navbar() {
 
   return (
     <nav className="bg-white shadow-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex-shrink-0 flex items-center">
             <Link href="/">
-              <Image src="/logo.svg" alt="Logo" width={40} height={40} />
+              <Image src={logo} alt="Logo" width={300} height={96} />
             </Link>
           </div>
           
@@ -42,27 +42,21 @@ export default function Navbar() {
             >
               Services
             </Link>
-            <Link
-              href="/blog"
-              onClick={handleLinkClick}
-              className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
-            >
-              Blog
-            </Link>
-
-            {/* Sign Up Button */}
-            <Link
+                {/* Sign Up Button */}
+                <Link
               href="/signup"
               onClick={handleLinkClick}
               className="ml-4 px-3 py-2 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
             >
               Sign Up
             </Link>
-
-            {/* Language Button */}
-            <button className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
-              Language
-            </button>
+            <Link
+              href="/#contact"
+              onClick={handleLinkClick}
+              className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+            >
+             Contact us
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}

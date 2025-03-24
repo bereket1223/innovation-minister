@@ -1,20 +1,24 @@
-"use client";
+"use client"
 
-import type React from "react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import toast from "react-hot-toast";
+import type React from "react"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { toast } from "react-hot-toast"
 
 export default function LoginForm() {
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
-  const router = useRouter();
+  const [phone, setPhone] = useState("")
+  const [password, setPassword] = useState("")
+  const [errorMessage, setErrorMessage] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMessage(""); // Clear previous errors
+    e.preventDefault()
+    setErrorMessage("") // Clear previous errors
+    setIsLoading(true)
+
     try {
       const response = await fetch("http://localhost:5000/api/user/login", {
         method: "POST",
@@ -23,26 +27,33 @@ export default function LoginForm() {
         },
         body: JSON.stringify({ phone, password }),
         credentials: "include", // This is important for cookies
-      });
+      })
+
+      const data = await response.json()
 
       if (response.ok) {
-        toast.success("Login successful!");
-        router.push("/dashboard");
+        // Store user data in localStorage for profile display
+        if (data.user) {
+          localStorage.setItem("userData", JSON.stringify(data.user))
+        }
+
+        toast.success("Login successful!")
+        // Use replace instead of push to prevent back navigation to login page
+        router.replace("/dashboard")
       } else {
-        const data = await response.json();
-        setErrorMessage(data.message || "Login failed. Please try again.");
+        setErrorMessage(data.message || "Login failed. Please try again.")
       }
     } catch (error) {
-      setErrorMessage("An error occurred. Please try again.");
+      setErrorMessage("An error occurred. Please try again.")
+    } finally {
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-9">
       {errorMessage && (
-        <div className="p-3 text-red-700 bg-red-100 border border-red-400 rounded-md">
-          {errorMessage}
-        </div>
+        <div className="p-3 text-red-700 bg-red-100 border border-red-400 rounded-md">{errorMessage}</div>
       )}
       <div>
         <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
@@ -73,9 +84,10 @@ export default function LoginForm() {
       </div>
       <button
         type="submit"
-        className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        disabled={isLoading}
+        className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-70"
       >
-        Log In
+        {isLoading ? "Logging in..." : "Log In"}
       </button>
       <p className="mt-4 text-center text-black">
         Don't have an account?{" "}
@@ -84,5 +96,6 @@ export default function LoginForm() {
         </Link>
       </p>
     </form>
-  );
+  )
 }
+

@@ -1,9 +1,9 @@
 "use client"
 
 import type React from "react"
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { Upload, CheckCircle } from 'lucide-react'
+import { Upload, CheckCircle, ArrowLeft, FileText, X, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,13 +11,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 interface FormData {
   fullName: string
   gender: string
-  age: string // Changed from dateOfBirth
+  age: string
   nationality: string
   region: string
   zone: string
@@ -45,7 +46,7 @@ export default function PersonalInfoForm() {
   const [formData, setFormData] = useState<FormData>({
     fullName: "",
     gender: "",
-    age: "", // Changed from dateOfBirth
+    age: "",
     nationality: "",
     region: "",
     zone: "",
@@ -71,10 +72,13 @@ export default function PersonalInfoForm() {
 
   const [file, setFile] = useState<File | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [fileError, setFileError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [showOtherSubCategory, setShowOtherSubCategory] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
 
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
 
   const regions = [
@@ -126,10 +130,66 @@ export default function PersonalInfoForm() {
     setFormData((prev) => ({ ...prev, [name]: checked }))
   }, [])
 
+  const validateFile = (file: File): boolean => {
+    setFileError(null)
+
+    if (!file) {
+      setFileError("Please upload a PDF file.")
+      return false
+    }
+
+    if (file.type !== "application/pdf") {
+      setFileError("Only PDF files are allowed.")
+      return false
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      // 10MB limit
+      setFileError("File size should not exceed 10MB.")
+      return false
+    }
+
+    return true
+  }
+
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFile(e.target.files[0])
-      setError(null)
+    if (e.target.files && e.target.files[0]) {
+      const selectedFile = e.target.files[0]
+      if (validateFile(selectedFile)) {
+        setFile(selectedFile)
+      } else {
+        e.target.value = ""
+      }
+    }
+  }, [])
+
+  const handleFileDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragging(false)
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const droppedFile = e.dataTransfer.files[0]
+      if (validateFile(droppedFile)) {
+        setFile(droppedFile)
+      }
+    }
+  }, [])
+
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }, [])
+
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragging(false)
+  }, [])
+
+  const removeFile = useCallback(() => {
+    setFile(null)
+    setFileError(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
     }
   }, [])
 
@@ -140,13 +200,7 @@ export default function PersonalInfoForm() {
     setIsLoading(true)
 
     if (!file) {
-      setError("Please upload a PDF file.")
-      setIsLoading(false)
-      return
-    }
-
-    if (file.type !== "application/pdf") {
-      setError("Only PDF files are allowed.")
+      setFileError("Please upload a PDF file.")
       setIsLoading(false)
       return
     }
@@ -166,7 +220,7 @@ export default function PersonalInfoForm() {
       if (response.ok) {
         const data = await response.json()
         console.log("Department created:", data)
-        setSuccess("Successfully submitted! Redirecting...")
+        setSuccess("Successfully registered! Redirecting to dashboard...")
         setTimeout(() => router.push("/dashboard"), 2000)
       } else {
         const errorData = await response.json()
@@ -181,15 +235,27 @@ export default function PersonalInfoForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 max-w-4xl mx-auto">
-      <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-8 rounded-lg shadow-lg mb-8">
-        <h1 className="text-3xl font-bold mb-2">Indigenous Knowledge Registration</h1>
-        <p className="text-lg">Share your wisdom and contribute to our collective knowledge.</p>
+    <form onSubmit={handleSubmit} className="space-y-8 max-w-4xl mx-auto pb-12">
+      <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 md:p-8 rounded-lg shadow-lg mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <h1 className="text-2xl md:text-3xl font-bold">Indigenous Knowledge Registration</h1>
+          <Button
+            type="button"
+            variant="outline"
+            className="bg-white/20 text-white hover:bg-white/30 border-white/40"
+            onClick={() => router.push("/dashboard")}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Dashboard
+          </Button>
+        </div>
+        <p className="text-lg mt-2">Share your wisdom and contribute to our collective knowledge.</p>
       </div>
 
-      <Card className="border-t-4 border-t-blue-500">
+      <Card className="border-t-4 border-t-blue-500 shadow-md">
         <CardHeader>
           <CardTitle className="text-2xl text-blue-700">Personal Information</CardTitle>
+          <CardDescription>Please provide your personal details</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -348,9 +414,10 @@ export default function PersonalInfoForm() {
         </CardContent>
       </Card>
 
-      <Card className="border-t-4 border-t-green-500">
+      <Card className="border-t-4 border-t-green-500 shadow-md">
         <CardHeader>
-          <CardTitle className="text-2xl text-green-700">Affiliation Details (Optional)</CardTitle>
+          <CardTitle className="text-2xl text-green-700">Affiliation Details</CardTitle>
+          <CardDescription>Optional information about your organization</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -406,9 +473,10 @@ export default function PersonalInfoForm() {
         </CardContent>
       </Card>
 
-      <Card className="border-t-4 border-t-yellow-500">
+      <Card className="border-t-4 border-t-yellow-500 shadow-md">
         <CardHeader>
-          <CardTitle className="text-2xl text-yellow-700">Education & Qualifications (Optional)</CardTitle>
+          <CardTitle className="text-2xl text-yellow-700">Education & Qualifications</CardTitle>
+          <CardDescription>Optional information about your educational background</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -465,9 +533,10 @@ export default function PersonalInfoForm() {
         </CardContent>
       </Card>
 
-      <Card className="border-t-4 border-t-red-500">
+      <Card className="border-t-4 border-t-red-500 shadow-md">
         <CardHeader>
           <CardTitle className="text-2xl text-red-700">Indigenous Knowledge Information</CardTitle>
+          <CardDescription>Details about the knowledge you're registering</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
@@ -490,7 +559,7 @@ export default function PersonalInfoForm() {
               value={formData.knowledgeDepartment}
               onValueChange={(value) => handleSelectChange("knowledgeDepartment", value)}
               required
-              className="flex space-x-4"
+              className="flex flex-col sm:flex-row gap-4"
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="Indigenous Research" id="research" />
@@ -557,31 +626,97 @@ export default function PersonalInfoForm() {
               className="border-gray-300 focus:ring-red-500 focus:border-red-500"
             />
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="pdfUpload" className="text-sm font-medium text-gray-700">
-              Upload PDF File
+              Upload PDF Document
             </Label>
-            <div className="flex items-center space-x-2">
-              <Input id="pdfUpload" type="file" accept=".pdf" onChange={handleFileChange} required className="hidden" />
-              <Button
-                type="button"
-                onClick={() => document.getElementById("pdfUpload")?.click()}
-                className="bg-red-500 hover:bg-red-600"
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                Choose File
-              </Button>
-              {file && <span className="text-sm text-gray-600">{file.name}</span>}
+            <div
+              className={`border-2 border-dashed rounded-lg p-6 transition-colors ${
+                isDragging
+                  ? "border-blue-500 bg-blue-50"
+                  : file
+                    ? "border-green-500 bg-green-50"
+                    : fileError
+                      ? "border-red-500 bg-red-50"
+                      : "border-gray-300 hover:border-gray-400"
+              }`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleFileDrop}
+            >
+              <Input
+                id="pdfUpload"
+                name="pdfUpload"
+                type="file"
+                ref={fileInputRef}
+                accept=".pdf"
+                onChange={handleFileChange}
+                required={!file}
+                className="hidden"
+              />
+
+              {!file ? (
+                <div className="flex flex-col items-center justify-center text-center">
+                  <FileText className="w-12 h-12 text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-600 mb-2">Drag and drop your PDF file here, or</p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Browse Files
+                  </Button>
+                  <p className="text-xs text-gray-500 mt-2">Only PDF files are accepted (Max: 10MB)</p>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between bg-white p-3 rounded-md border border-green-200">
+                  <div className="flex items-center">
+                    <div className="bg-green-100 p-2 rounded-md mr-3">
+                      <FileText className="w-6 h-6 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">{file.name}</p>
+                      <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={removeFile}
+                    className="text-gray-500 hover:text-red-500 hover:bg-red-50"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+
+              {fileError && (
+                <div className="mt-2 text-sm text-red-600 flex items-center">
+                  <AlertCircle className="w-4 h-4 mr-1" />
+                  {fileError}
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-t-4 border-t-purple-500 shadow-md">
         <CardHeader>
           <CardTitle className="text-2xl text-purple-700">Compliance & Declarations</CardTitle>
+          <CardDescription>Please review and agree to the terms</CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="p-4 bg-purple-50 rounded-lg border border-purple-100 mb-4">
+            <p className="text-sm text-gray-700">
+              By submitting this form, you confirm that all information provided is accurate and complete. You grant
+              permission for this knowledge to be documented and preserved in accordance with our terms and conditions.
+            </p>
+          </div>
           <div className="flex items-center space-x-2">
             <Checkbox
               id="agreement"
@@ -599,21 +734,30 @@ export default function PersonalInfoForm() {
             </Label>
           </div>
         </CardContent>
-        <CardFooter>
-          <Button 
-            type="submit" 
-            disabled={isLoading || !formData.agreement} 
-            className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        <CardFooter className="flex flex-col sm:flex-row gap-4 pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full sm:w-1/3 border-purple-300 text-purple-700 hover:bg-purple-50"
+            onClick={() => router.push("/dashboard")}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Dashboard
+          </Button>
+          <Button
+            type="submit"
+            disabled={isLoading || !formData.agreement}
+            className="w-full sm:w-2/3 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <>
                 <Progress value={33} className="w-4 h-4 mr-2 animate-spin" />
-                Submitting...
+                Processing...
               </>
             ) : (
               <>
                 <CheckCircle className="w-4 h-4 mr-2" />
-                Submit
+                Register
               </>
             )}
           </Button>
@@ -621,17 +765,19 @@ export default function PersonalInfoForm() {
       </Card>
 
       {error && (
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md" role="alert">
-          <p className="font-bold">Error</p>
-          <p>{error}</p>
-        </div>
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
       {success && (
-        <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md" role="alert">
-          <p className="font-bold">Success</p>
-          <p>{success}</p>
-        </div>
+        <Alert className="bg-green-50 border-green-200 text-green-800">
+          <CheckCircle className="h-4 w-4 text-green-600" />
+          <AlertTitle>Success</AlertTitle>
+          <AlertDescription>{success}</AlertDescription>
+        </Alert>
       )}
     </form>
   )
