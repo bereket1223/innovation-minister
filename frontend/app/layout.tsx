@@ -21,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   const pathname= usePathname()
-  const p = pathname.startsWith('/dashboard') || pathname.startsWith('/form') || pathname.startsWith('/users') || pathname.startsWith('/indigenous-tables') || pathname.startsWith('/indigenous-detail') || pathname.startsWith('/sheets')
+  const p = pathname.startsWith('/dashboard') || pathname.startsWith('/form') || pathname.startsWith('/users') || pathname.startsWith('/indigenous-tables') || pathname.startsWith('/indigenous-detail') || pathname.startsWith('/sheets') || pathname.startsWith('/profile')
 
   return (
     <html lang="en">
