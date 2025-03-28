@@ -11,24 +11,19 @@ import { ApiResponse } from "../../utils/ApiResponse.js"
 
 export const createDepartmentController = async (req, res) => {
   try {
-    // Get file path if uploaded
     const filePath = req.file ? req.file.path : null
 
-    // Create file URL for frontend access
     const fileUrl = filePath ? `${req.protocol}://${req.get("host")}/${filePath}` : null
 
-    // Combine form data with file path and URL
     const departmentData = {
       ...req.body,
       documentPath: filePath,
       fileUrl: fileUrl,
-      status: "pending", // Default status for new submissions
+      status: "pending", 
     }
 
-    // Create department using service
     const department = await createDepartment(departmentData)
 
-    // Return success response
     return res.status(201).json(new ApiResponse(201, department, "Department created successfully"))
   } catch (error) {
     console.error("Error in createDepartmentController:", error)
@@ -73,7 +68,6 @@ export const getDepartmentsByTypeController = async (req, res) => {
   try {
     const { type } = req.params
 
-    // Convert URL parameter to proper department type
     let departmentType
     switch (type) {
       case "indigenous-innovation":

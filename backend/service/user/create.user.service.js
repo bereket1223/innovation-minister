@@ -5,7 +5,7 @@ import fs from "fs"
 import path from "path"
 
 // Create user service
-export const createUser = async ({ fullName, email, phone, password, profilePictureUrl }) => {
+export const createUser = async ({ fullName, email, phone, password, profilePictureUrl, role }) => {
   // Check if user with email already exists
   const existingUserByEmail = await User.findOne({ email })
   if (existingUserByEmail) {
@@ -29,6 +29,7 @@ export const createUser = async ({ fullName, email, phone, password, profilePict
     phone,
     password: hashedPassword,
     profilePictureUrl,
+    role: role || "user", // Default to "user" if not specified
   })
 
   // Save user to database
@@ -55,6 +56,7 @@ export const loginUser = async ({ phone, password }) => {
       id: user._id,
       email: user.email,
       phone: user.phone,
+      role: user.role,
     },
     process.env.JWT_SECRET || "your-secret-key",
     { expiresIn: "7d" },
@@ -67,6 +69,7 @@ export const loginUser = async ({ phone, password }) => {
       email: user.email,
       phone: user.phone,
       profilePictureUrl: user.profilePictureUrl,
+      role: user.role,
     },
     token,
   }
@@ -169,6 +172,26 @@ export const deleteUser = async (userId) => {
     }
 
     return true
+  } catch (error) {
+    // Handle invalid ObjectId format
+    if (error.name === "CastError" && error.kind === "ObjectId") {
+      throw new Error("Invalid user ID format")
+    }
+    throw error
+  }
+}
+
+// New service to update user role
+export const updateUserRole = async (userId, role) => {
+  try {
+    // Update user role
+    const updatedUser = await User.findByIdAndUpdate(userId, { $set: { role } }, { new: true }).select("-password")
+
+    if (!updatedUser) {
+      throw new Error("User not found")
+    }
+
+    return updatedUser
   } catch (error) {
     // Handle invalid ObjectId format
     if (error.name === "CastError" && error.kind === "ObjectId") {

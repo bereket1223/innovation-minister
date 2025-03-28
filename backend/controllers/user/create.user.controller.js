@@ -11,7 +11,7 @@ import {
 // Create user controller
 export const createUserController = async (req, res) => {
   try {
-    const { fullName, email, phone, password } = req.body
+    const { fullName, email, phone, password, role } = req.body
     let profilePictureUrl = ""
 
     // Handle profile picture upload
@@ -20,13 +20,14 @@ export const createUserController = async (req, res) => {
       profilePictureUrl = `/uploads/profiles/${path.basename(req.file.path)}`
     }
 
-    // Create user
+    // Create user with role (default to "user" if not specified)
     const user = await createUser({
       fullName,
       email,
       phone,
       password,
       profilePictureUrl,
+      role: role || "user",
     })
 
     res.status(201).json({
@@ -37,6 +38,7 @@ export const createUserController = async (req, res) => {
         email: user.email,
         phone: user.phone,
         profilePictureUrl: user.profilePictureUrl,
+        role: user.role,
       },
     })
   } catch (error) {
@@ -72,10 +74,14 @@ export const loginUserController = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     })
 
-    // Send response
+    // Send response with token for client-side storage
     res.status(200).json({
       message: "Login successful",
-      user,
+      user: {
+        ...user,
+        role: user.role || "user", // Ensure role is included
+      },
+      token,
     })
   } catch (error) {
     if (error.message === "Invalid phone number or password") {
@@ -115,6 +121,7 @@ export const getAllUsersController = async (req, res) => {
       email: user.email,
       phone: user.phone,
       profilePictureUrl: user.profilePictureUrl,
+      role: user.role,
       createdAt: user.createdAt,
     }))
 
@@ -148,6 +155,7 @@ export const getUserByIdController = async (req, res) => {
         email: user.email,
         phone: user.phone,
         profilePictureUrl: user.profilePictureUrl,
+        role: user.role,
         createdAt: user.createdAt,
       },
     })
@@ -179,6 +187,7 @@ export const updateUserProfileController = async (req, res) => {
         email: updatedUser.email,
         phone: updatedUser.phone,
         profilePictureUrl: updatedUser.profilePictureUrl,
+        role: updatedUser.role,
         createdAt: updatedUser.createdAt,
       },
     })
@@ -212,6 +221,44 @@ export const deleteUserController = async (req, res) => {
   } catch (error) {
     console.error("Delete user error:", error)
     res.status(500).json({ message: "An error occurred while deleting the user" })
+  }
+}
+
+// Update user role controller (admin only)
+export const updateUserRoleController = async (req, res) => {
+  try {
+    const { userId, role } = req.body
+
+    if (!userId || !role) {
+      return res.status(400).json({ message: "User ID and role are required" })
+    }
+
+    if (!["user", "admin"].includes(role)) {
+      return res.status(400).json({ message: "Invalid role. Role must be 'user' or 'admin'" })
+    }
+
+    // Check if the user exists
+    const user = await getUserById(userId)
+    if (!user) {
+      return res.status(404).json({ message: "User not found" })
+    }
+
+    // Update user role
+    const updatedUser = await updateUserProfile(userId, { role })
+
+    res.status(200).json({
+      message: "User role updated successfully",
+      user: {
+        id: updatedUser._id,
+        fullName: updatedUser.fullName,
+        email: updatedUser.email,
+        phone: updatedUser.phone,
+        role: updatedUser.role,
+      },
+    })
+  } catch (error) {
+    console.error("Update user role error:", error)
+    res.status(500).json({ message: "An error occurred while updating user role" })
   }
 }
 

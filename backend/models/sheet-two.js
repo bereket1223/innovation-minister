@@ -4,32 +4,32 @@ const sheetTwoSchema = new mongoose.Schema(
   {
     hostOrganization: {
       type: String,
-      required: [true, "Host organization is required"],
+    
     },
     companyName: {
       type: String,
-      required: [true, "Company name is required"],
+ 
     },
     yearEstablished: {
       type: String,
-      required: [true, "Year of establishment is required"],
+   
     },
     contactPersonName: {
       type: String,
-      required: [true, "Contact person name is required"],
+  
     },
     gender: {
       type: String,
       enum: ["male", "female"],
-      required: [true, "Gender is required"],
+
     },
     regionCity: {
       type: String,
-      required: [true, "Region and city are required"],
+ 
     },
     sector: {
       type: String,
-      required: [true, "Sector is required"],
+
     },
     associationMemberFemale: {
       type: Number,
@@ -65,11 +65,11 @@ const sheetTwoSchema = new mongoose.Schema(
     },
     phoneNumber: {
       type: String,
-      required: [true, "Phone number is required"],
+
     },
     email: {
       type: String,
-      required: [true, "Email is required"],
+  
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,

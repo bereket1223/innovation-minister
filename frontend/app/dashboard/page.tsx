@@ -28,12 +28,15 @@ import Sidebar from "../components/Sidebar"
 import ProfileDropdown from "../components/ProfileDropdown"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
+import { toast } from "react-hot-toast"
 
 interface KnowledgeEntry {
+  id: string
+  fullName: string
+  phoneNumber: string
   knowledgeTitle: string
-  knowledgeDepartment: string
+  knowledgeDepartment: string // Added knowledgeDepartment field
   subCategory: string
-  fileUrl: string | null
   status: string
   createdAt: string
 }
@@ -63,30 +66,90 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
 
+  // Update the handleProfileClick function to use the existing endpoints
   const handleProfileClick = async () => {
-    // Mock data for demonstration
-    const mockData: KnowledgeEntry[] = [
-      {
-        knowledgeTitle: "Traditional Coffee Ceremony",
-        knowledgeDepartment: "Indigenous Innovation",
-        subCategory: "Food and Beverages",
-        fileUrl: null,
-        status: "Approved",
-        createdAt: new Date().toISOString(),
-      },
-      {
-        knowledgeTitle: "Medicinal Plants of Ethiopia",
-        knowledgeDepartment: "Indigenous Research",
-        subCategory: "Traditional Medicine",
-        fileUrl: null,
-        status: "Pending",
-        createdAt: new Date().toISOString(),
-      },
-    ]
-
-    setKnowledgeData(mockData)
+    setIsLoading(true)
     setShowProfile(true)
+
+    try {
+      // Get user data from localStorage
+      const storedUserData = localStorage.getItem("userData")
+      if (!storedUserData) {
+        toast.error("User profile not found. Please log in again.")
+        setKnowledgeData([])
+        setIsLoading(false)
+        return
+      }
+
+      const userData = JSON.parse(storedUserData)
+      const userPhone = userData.phone
+
+      if (!userPhone) {
+        toast.error("Phone number not found in user profile.")
+        setKnowledgeData([])
+        setIsLoading(false)
+        return
+      }
+
+      console.log("Fetching knowledge data for phone:", userPhone)
+
+      // Fetch all departments and filter on the client side
+      // This is a workaround until a specific endpoint is created on the backend
+      const response = await fetch(`http://localhost:5000/api/department`, {
+        credentials: "include",
+      })
+
+      if (!response.ok) {
+        throw new Error(`Error fetching knowledge data: ${response.status}`)
+      }
+
+      const data = await response.json()
+      console.log("Received data:", data)
+
+      // Check if data is an array, if not, handle accordingly
+      let departmentsArray = []
+
+      if (Array.isArray(data)) {
+        departmentsArray = data
+      } else if (data.departments && Array.isArray(data.departments)) {
+        departmentsArray = data.departments
+      } else if (data.data && Array.isArray(data.data)) {
+        departmentsArray = data.data
+      } else {
+        // If it's a single object, wrap it in an array
+        departmentsArray = [data]
+      }
+
+      // Filter departments to only include those matching the user's phone number
+      const userDepartments = departmentsArray.filter((dept: any) => {
+        // Check both phoneNumber and phone fields to be safe
+        return (dept.phoneNumber && dept.phoneNumber === userPhone) || (dept.phone && dept.phone === userPhone)
+      })
+
+      console.log("Filtered departments for user:", userDepartments)
+
+      // Transform the data to match the KnowledgeEntry interface
+      const formattedData = userDepartments.map((item: any) => ({
+        id: item._id || item.id || "",
+        fullName: item.fullName || "",
+        phoneNumber: item.phoneNumber || item.phone || "", // Check both fields
+        knowledgeTitle: item.knowledgeTitle || "",
+        knowledgeDepartment: item.knowledgeDepartment || item.department || "", // Added knowledgeDepartment field
+        subCategory: item.subCategory || "",
+        status: item.status || "Pending",
+        createdAt: item.createdAt || new Date().toISOString(),
+      }))
+
+      setKnowledgeData(formattedData)
+    } catch (error) {
+      console.error("Failed to fetch knowledge data:", error)
+      toast.error("Failed to fetch your knowledge entries. Please try again.")
+      setKnowledgeData([])
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleRegister = (category: string, subcategory: string) => {
@@ -140,6 +203,26 @@ export default function Dashboard() {
     },
   ]
 
+  const handleSearch = () => {
+    console.log("Searching for:", searchQuery)
+    // You could add additional search logic here if needed
+    // For example, if you want to only filter when the button is clicked:
+    // setActiveSearchQuery(searchQuery);
+  }
+
+  // Filter knowledge data based on search query and active tab
+  const filteredKnowledgeData = knowledgeData.filter((entry) => {
+    const matchesSearch =
+      searchQuery === "" ||
+      entry.knowledgeTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      entry.subCategory.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      entry.knowledgeDepartment.toLowerCase().includes(searchQuery.toLowerCase()) // Added search by department
+
+    const matchesTab = activeTab === "all" || entry.status.toLowerCase() === activeTab
+
+    return matchesSearch && matchesTab
+  })
+
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar isOpen={sidebarOpen} toggleSidebar={() => setSidebarOpen(!sidebarOpen)} onNavigate={handleNavigate} />
@@ -162,15 +245,6 @@ export default function Dashboard() {
             </div>
 
             <div className="flex items-center space-x-2 w-full md:w-auto">
-              <div className="relative flex-grow md:flex-grow-0 md:w-64">
-                <Input
-                  type="search"
-                  placeholder="Search knowledge..."
-                  className="pl-4 border-blue-200 focus:border-blue-300 focus:ring-blue-300 w-full"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
               <ProfileDropdown onProfileClick={handleProfileClick} />
             </div>
           </div>
@@ -185,77 +259,40 @@ export default function Dashboard() {
                   <TabsList className="grid grid-cols-3 mb-4">
                     <TabsTrigger value="all">All</TabsTrigger>
                     <TabsTrigger value="approved">Approved</TabsTrigger>
-                    <TabsTrigger value="pending">Pendingggg</TabsTrigger>
+                    <TabsTrigger value="pending">Pending</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="all" className="mt-0">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Title</TableHead>
-                          <TableHead>Category</TableHead>
-                          <TableHead>Sub-Category</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Date</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {knowledgeData.length > 0 ? (
-                          knowledgeData.map((entry, index) => (
-                            <TableRow key={index}>
-                              <TableCell>{entry.knowledgeTitle}</TableCell>
-                              <TableCell>{entry.knowledgeDepartment}</TableCell>
-                              <TableCell>{entry.subCategory}</TableCell>
-                              <TableCell>
-                                <Badge
-                                  className={`${
-                                    entry.status === "Approved"
-                                      ? "bg-blue-100 text-blue-800"
-                                      : "bg-amber-100 text-amber-800"
-                                  }`}
-                                >
-                                  {entry.status}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>{formatDate(entry.createdAt)}</TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={5} className="text-center py-4">
-                              No entries found. Start by registering your indigenous knowledge.
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </TabsContent>
-
-                  {/* Filter tabs by status */}
-                  {["approved", "pending"].map((status) => (
-                    <TabsContent key={status} value={status} className="mt-0">
+                    {isLoading ? (
+                      <div className="flex justify-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-700"></div>
+                      </div>
+                    ) : (
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>Title</TableHead>
-                            <TableHead>Category</TableHead>
+                            <TableHead>Full Name</TableHead>
+                            <TableHead>Phone Number</TableHead>
+                            <TableHead>Knowledge Title</TableHead>
+                            <TableHead>Department</TableHead>
                             <TableHead>Sub-Category</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Date</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {knowledgeData
-                            .filter((entry) => entry.status.toLowerCase() === status)
-                            .map((entry, index) => (
+                          {filteredKnowledgeData.length > 0 ? (
+                            filteredKnowledgeData.map((entry, index) => (
                               <TableRow key={index}>
+                                <TableCell>{entry.fullName}</TableCell>
+                                <TableCell>{entry.phoneNumber}</TableCell>
                                 <TableCell>{entry.knowledgeTitle}</TableCell>
                                 <TableCell>{entry.knowledgeDepartment}</TableCell>
                                 <TableCell>{entry.subCategory}</TableCell>
                                 <TableCell>
                                   <Badge
                                     className={`${
-                                      entry.status === "Approved"
+                                      entry.status.toLowerCase() === "approved"
                                         ? "bg-blue-100 text-blue-800"
                                         : "bg-amber-100 text-amber-800"
                                     }`}
@@ -265,16 +302,74 @@ export default function Dashboard() {
                                 </TableCell>
                                 <TableCell>{formatDate(entry.createdAt)}</TableCell>
                               </TableRow>
-                            ))}
-                          {knowledgeData.filter((entry) => entry.status.toLowerCase() === status).length === 0 && (
+                            ))
+                          ) : (
                             <TableRow>
-                              <TableCell colSpan={5} className="text-center py-4">
-                                No {status} entries found.
+                              <TableCell colSpan={7} className="text-center py-4">
+                                No entries found. Start by registering your indigenous knowledge.
                               </TableCell>
                             </TableRow>
                           )}
                         </TableBody>
                       </Table>
+                    )}
+                  </TabsContent>
+
+                  {/* Filter tabs by status */}
+                  {["approved", "pending"].map((status) => (
+                    <TabsContent key={status} value={status} className="mt-0">
+                      {isLoading ? (
+                        <div className="flex justify-center py-8">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-700"></div>
+                        </div>
+                      ) : (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Full Name</TableHead>
+                              <TableHead>Phone Number</TableHead>
+                              <TableHead>Knowledge Title</TableHead>
+                              <TableHead>Department</TableHead>
+                              <TableHead>Sub-Category</TableHead>
+                              <TableHead>Status</TableHead>
+                              <TableHead>Date</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {filteredKnowledgeData
+                              .filter((entry) => entry.status.toLowerCase() === status)
+                              .map((entry, index) => (
+                                <TableRow key={index}>
+                                  <TableCell>{entry.fullName}</TableCell>
+                                  <TableCell>{entry.phoneNumber}</TableCell>
+                                  <TableCell>{entry.knowledgeTitle}</TableCell>
+                                  <TableCell>{entry.knowledgeDepartment}</TableCell>
+                                  <TableCell>{entry.subCategory}</TableCell>
+                                  <TableCell>
+                                    <Badge
+                                      className={`${
+                                        entry.status.toLowerCase() === "approved"
+                                          ? "bg-blue-100 text-blue-800"
+                                          : "bg-amber-100 text-amber-800"
+                                      }`}
+                                    >
+                                      {entry.status}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell>{formatDate(entry.createdAt)}</TableCell>
+                                </TableRow>
+                              ))}
+                            {filteredKnowledgeData.filter((entry) => entry.status.toLowerCase() === status).length ===
+                              0 && (
+                              <TableRow>
+                                <TableCell colSpan={7} className="text-center py-4">
+                                  No {status} entries found.
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      )}
                     </TabsContent>
                   ))}
                 </Tabs>

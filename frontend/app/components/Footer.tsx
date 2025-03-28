@@ -115,12 +115,12 @@ const Footer = () => {
           <div className="text-gray-400">
             Developed by{" "}
             <Link
-              href="https://www.linkedin.com/in/yourname"
+              href="https://www.linkedin.com/in/bereket-kindie-948b40293?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app"
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-400 hover:underline inline-flex items-center"
             >
-              Your Name
+              Bereket_K
               <ExternalLink className="h-3 w-3 ml-1" />
             </Link>
           </div>

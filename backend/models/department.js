@@ -11,7 +11,7 @@ const departmentSchema = new mongoose.Schema(
     gender: {
       type: String,
       
-      enum: ["male", "female", "other"],
+      enum: ["male", "female"],
     },
     age: {
       type: Number,
@@ -109,7 +109,6 @@ const departmentSchema = new mongoose.Schema(
       trim: true,
     },
 
-    // Document path and URL
     documentPath: {
       type: String,
       

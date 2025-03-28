@@ -32,26 +32,29 @@ export const verifyToken = (req, res, next) => {
     })
   }
 }
-// Add this to your existing auth.js file
 
 export const isAdmin = async (req, res, next) => {
   try {
-    console.log(req.user)
     if (!req.user) {
       return res.status(403).json(new ApiError(403, "Access denied. Admin privileges required."))
     }
 
-    const { id  } = req.user
+    const { id } = req.user
     const user = await getUserById(id)
-    console.log(user)
+
+    if (!user) {
+      return res.status(403).json(new ApiError(403, "User not found"))
+    }
+
     const isAdmin = user.role === "admin"
 
     if (!isAdmin) {
       return res.status(403).json(new ApiError(403, "Access denied. Admin privileges required."))
     }
-    
+
     next()
   } catch (error) {
     return res.status(500).json(new ApiError(500, "Something went wrong while verifying admin privileges"))
   }
 }
+

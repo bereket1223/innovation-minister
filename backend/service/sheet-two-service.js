@@ -1,6 +1,5 @@
 import SheetTwo from "../models/sheet-two.model.js"
 
-// Create a new sheet two entry
 export const createSheetTwoService = async (data, userId) => {
   try {
     const newEntry = new SheetTwo({
@@ -14,7 +13,6 @@ export const createSheetTwoService = async (data, userId) => {
   }
 }
 
-// Get all sheet two entries
 export const getAllSheetTwosService = async () => {
   try {
     return await SheetTwo.find().sort({ createdAt: -1 })

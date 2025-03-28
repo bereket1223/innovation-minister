@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Home, Database, FileText, Users, Settings, LogOut, Menu, X, Table } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -13,10 +13,36 @@ interface SidebarProps {
 
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen)
+  }
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true)
+      const response = await fetch("http://localhost:5000/api/user/logout", {
+        method: "POST",
+        credentials: "include", // Include cookies in the request
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (response.ok) {
+        // Redirect to login page or home page after successful logout
+        router.push("/login")
+      } else {
+        console.error("Logout failed:", await response.text())
+      }
+    } catch (error) {
+      console.error("Logout error:", error)
+    } finally {
+      setIsLoggingOut(false)
+    }
   }
 
   const navItems = [
@@ -40,21 +66,13 @@ export function Sidebar({ className }: SidebarProps) {
       href: "/sheets/sheet-two",
       icon: Table,
     },
-    {
-      name: "Documents",
-      href: "/documents",
-      icon: FileText,
-    },
+  
     {
       name: "Users",
       href: "/users",
       icon: Users,
     },
-    {
-      name: "Settings",
-      href: "/settings",
-      icon: Settings,
-    },
+   
   ]
 
   return (
@@ -92,9 +110,14 @@ export function Sidebar({ className }: SidebarProps) {
               ))}
             </nav>
             <div className="absolute bottom-20 left-0 right-0 px-4">
-              <Button variant="destructive" className="w-full flex items-center justify-center">
+              <Button
+                variant="destructive"
+                className="w-full flex items-center justify-center"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+              >
                 <LogOut className="h-4 w-4 mr-2" />
-                Logout
+                {isLoggingOut ? "Logging out..." : "Logout"}
               </Button>
             </div>
           </div>
@@ -121,9 +144,14 @@ export function Sidebar({ className }: SidebarProps) {
             ))}
           </nav>
           <div className="mt-auto mb-6">
-            <Button variant="destructive" className="w-full flex items-center justify-center">
+            <Button
+              variant="destructive"
+              className="w-full flex items-center justify-center"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+            >
               <LogOut className="h-4 w-4 mr-2" />
-              Logout
+              {isLoggingOut ? "Logging out..." : "Logout"}
             </Button>
           </div>
         </div>

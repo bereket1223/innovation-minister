@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -38,8 +37,18 @@ export default function LoginForm() {
         }
 
         toast.success("Login successful!")
-        // Use replace instead of push to prevent back navigation to login page
-        router.replace("/dashboard")
+
+        // Check user role and redirect accordingly
+        if (data.user && data.user.role) {
+          if (data.user.role === "admin") {
+            router.replace("/dashboards") // Admin dashboard
+          } else {
+            router.replace("/dashboard") // Regular user dashboard
+          }
+        } else {
+          // Default to user dashboard if role is not specified
+          router.replace("/dashboard")
+        }
       } else {
         setErrorMessage(data.message || "Login failed. Please try again.")
       }
@@ -66,7 +75,7 @@ export default function LoginForm() {
           onChange={(e) => setPhone(e.target.value)}
           required
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-          placeholder="e.g., +1234567890"
+          placeholder="09xx xxx xxx"
         />
       </div>
       <div>

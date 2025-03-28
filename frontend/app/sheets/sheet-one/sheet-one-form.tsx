@@ -11,12 +11,16 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useToast } from "@/hooks/use-toast"
 import { X } from "lucide-react"
 
+// Use environment variable with fallback
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
+
 interface SheetOneFormProps {
   onClose: () => void
   initialData?: any
+  onSuccess?: () => void // Add callback for successful submission
 }
 
-export default function SheetOneForm({ onClose, initialData }: SheetOneFormProps) {
+export default function SheetOneForm({ onClose, initialData, onSuccess }: SheetOneFormProps) {
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState(
@@ -56,9 +60,7 @@ export default function SheetOneForm({ onClose, initialData }: SheetOneFormProps
     setLoading(true)
 
     try {
-      const url = initialData
-        ? `http://localhost:5000/api/sheet-one/${initialData._id}`
-        : `http://localhost:5000/api/sheet-one`
+      const url = initialData ? `${API_BASE_URL}/sheet-one/${initialData._id}` : `${API_BASE_URL}/sheet-one`
 
       const method = initialData ? "PUT" : "POST"
 
@@ -67,12 +69,13 @@ export default function SheetOneForm({ onClose, initialData }: SheetOneFormProps
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include",
+        credentials: "include", // This is the key change - use cookies for auth
         body: JSON.stringify(formData),
       })
 
       if (!response.ok) {
-        throw new Error("Failed to save data")
+        const errorData = await response.json().catch(() => null)
+        throw new Error(errorData?.message || "Failed to save data")
       }
 
       toast({
@@ -80,12 +83,17 @@ export default function SheetOneForm({ onClose, initialData }: SheetOneFormProps
         description: initialData ? "Entry updated successfully" : "New entry added successfully",
       })
 
+      // Call onSuccess callback if provided
+      if (onSuccess) {
+        onSuccess()
+      }
+
       onClose()
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving form:", error)
       toast({
         title: "Error",
-        description: "Failed to save data. Please try again.",
+        description: error.message || "Failed to save data. Please try again.",
         variant: "destructive",
       })
     } finally {

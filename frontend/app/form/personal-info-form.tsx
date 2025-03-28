@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useCallback, useRef } from "react"
+import { useState, useCallback, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Upload, CheckCircle, ArrowLeft, FileText, X, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -42,6 +42,28 @@ interface FormData {
   agreement: boolean
 }
 
+interface UserData {
+  name?: string
+  email?: string
+  phone?: string
+  gender?: string
+  age?: string
+  nationality?: string
+  region?: string
+  zone?: string
+  woreda?: string
+  kebele?: string
+  institution?: string
+  department?: string
+  designation?: string
+  institutionAddress?: string
+  highestDegree?: string
+  university?: string
+  completionYear?: string
+  specialization?: string
+  [key: string]: any
+}
+
 export default function PersonalInfoForm() {
   const [formData, setFormData] = useState<FormData>({
     fullName: "",
@@ -77,36 +99,83 @@ export default function PersonalInfoForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [showOtherSubCategory, setShowOtherSubCategory] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
+  const [fieldsAutoFilled, setFieldsAutoFilled] = useState<boolean>(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
 
+  // Load user data from localStorage when component mounts
+  useEffect(() => {
+    try {
+      const userDataString = localStorage.getItem("userData")
+      if (userDataString) {
+        const userData: UserData = JSON.parse(userDataString)
+
+        // Check if we have email or phone data
+        const hasContactInfo = userData.email || userData.phone
+
+        // Map user data to form fields
+        setFormData((prevData) => ({
+          ...prevData,
+          fullName: userData.name || "",
+          email: userData.email || "",
+          phoneNumber: userData.phone || "",
+          gender: userData.gender || "",
+          age: userData.age || "",
+          nationality: userData.nationality || "",
+          region: userData.region || "",
+          zone: userData.zone || "",
+          woreda: userData.woreda || "",
+          kebele: userData.kebele || "",
+          institution: userData.institution || "",
+          department: userData.department || "",
+          designation: userData.designation || "",
+          institutionAddress: userData.institutionAddress || "",
+          highestDegree: userData.highestDegree || "",
+          university: userData.university || "",
+          completionYear: userData.completionYear || "",
+          specialization: userData.specialization || "",
+        }))
+
+        // Set auto-filled state if we have contact info
+        if (hasContactInfo) {
+          setFieldsAutoFilled(true)
+        }
+      }
+    } catch (error) {
+      console.error("Error loading user data:", error)
+    }
+  }, [])
+
   const regions = [
-    "Region 1",
-    "Region 2",
-    "Region 3",
-    "Region 4",
-    "Region 5",
-    "Region 6",
-    "Region 7",
-    "Region 8",
-    "Region 9",
-    "Region 10",
+    "Tigray",
+    "Afar",
+    "Amhara",
+    "Oromia",
+    "Somali",
+    "Benishangul-Gumuz",
+    "SNNPR",
+    "Gambella",
+    "Harari",
+    "Addis Ababa",
+    "Dire Dawa",
+    "Others",
   ]
 
   const subCategories = [
-    "Sub-category 1",
-    "Sub-category 2",
-    "Sub-category 3",
-    "Sub-category 4",
-    "Sub-category 5",
-    "Sub-category 6",
-    "Sub-category 7",
-    "Sub-category 8",
-    "Sub-category 9",
-    "Sub-category 10",
-    "Sub-category 11",
-    "Sub-category 12",
+    "Agriculture",
+    "Food and Beverages",
+    "Handicraft",
+    "Scriptures",
+    "Astronomy",
+    "Construction",
+    "Conflict Resolution",
+    "Entertainment",
+    "Traditional House Building",
+    "Education System",
+    "Clothing Industry",
+    "Philosophy",
+    "Traditional Medicine",
     "Others",
   ]
 
@@ -282,7 +351,7 @@ export default function PersonalInfoForm() {
                 onValueChange={(value) => handleSelectChange("gender", value)}
                 required
               >
-                <SelectTrigger className="border-gray-300 focus:ring-blue-500 focus:border-blue-500 bg-transparent">
+                <SelectTrigger className="border-gray-300 focus:ring-blue-500 focus:border-blue-500 bg-white">
                   <SelectValue placeholder="Select gender" />
                 </SelectTrigger>
                 <SelectContent>
@@ -331,7 +400,7 @@ export default function PersonalInfoForm() {
                 onValueChange={(value) => handleSelectChange("region", value)}
                 required
               >
-                <SelectTrigger className="border-gray-300 focus:ring-blue-500 focus:border-blue-500 bg-transparent">
+                <SelectTrigger className="border-gray-300 focus:ring-blue-500 focus:border-blue-500 bg-white">
                   <SelectValue placeholder="Select region" />
                 </SelectTrigger>
                 <SelectContent>
@@ -393,8 +462,14 @@ export default function PersonalInfoForm() {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                readOnly={fieldsAutoFilled && formData.email !== ""}
+                className={`border-gray-300 focus:ring-blue-500 focus:border-blue-500 ${
+                  fieldsAutoFilled && formData.email !== "" ? "bg-gray-100 cursor-not-allowed" : ""
+                }`}
               />
+              {fieldsAutoFilled && formData.email !== "" && (
+                <p className="text-xs text-gray-500 mt-1">Email cannot be changed on this form</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="phoneNumber" className="text-sm font-medium text-gray-700">
@@ -407,13 +482,20 @@ export default function PersonalInfoForm() {
                 value={formData.phoneNumber}
                 onChange={handleChange}
                 required
-                className="border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                readOnly={fieldsAutoFilled && formData.phoneNumber !== ""}
+                className={`border-gray-300 focus:ring-blue-500 focus:border-blue-500 ${
+                  fieldsAutoFilled && formData.phoneNumber !== "" ? "bg-gray-100 cursor-not-allowed" : ""
+                }`}
               />
+              {fieldsAutoFilled && formData.phoneNumber !== "" && (
+                <p className="text-xs text-gray-500 mt-1">Phone number cannot be changed on this form</p>
+              )}
             </div>
           </div>
         </CardContent>
       </Card>
 
+      {/* Rest of the form remains unchanged */}
       <Card className="border-t-4 border-t-green-500 shadow-md">
         <CardHeader>
           <CardTitle className="text-2xl text-green-700">Affiliation Details</CardTitle>
@@ -585,7 +667,7 @@ export default function PersonalInfoForm() {
               onValueChange={(value) => handleSelectChange("subCategory", value)}
               required
             >
-              <SelectTrigger className="border-gray-300 focus:ring-red-500 focus:border-red-500 bg-transparent">
+              <SelectTrigger className="border-gray-300 focus:ring-red-500 focus:border-red-500 bg-white">
                 <SelectValue placeholder="Select sub-category" />
               </SelectTrigger>
               <SelectContent>

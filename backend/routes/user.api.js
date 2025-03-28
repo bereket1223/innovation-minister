@@ -7,8 +7,9 @@ import {
   getAllUsersController,
   getUserByIdController,
   deleteUserController,
+  updateUserRoleController,
 } from "../controllers/user/create.user.controller.js"
-import { verifyToken } from "../middleware/auth.js"
+import { verifyToken, isAdmin } from "../middleware/auth.js"
 import { uploadProfile, handleMulterError } from "../middleware/multer.middleware.js"
 
 const router = express.Router()
@@ -31,8 +32,11 @@ router.put(
 router.get("/", verifyToken, getAllUsersController)
 router.get("/:id", verifyToken, getUserByIdController)
 
-// User deletion route
-router.delete("/:id", verifyToken, deleteUserController)
+// Admin only routes
+router.put("/role", verifyToken, isAdmin, updateUserRoleController)
+
+// User deletion route (admin only)
+router.delete("/:id", verifyToken, isAdmin, deleteUserController)
 
 export default router
 

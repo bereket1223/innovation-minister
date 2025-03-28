@@ -1,6 +1,5 @@
 import SheetOne from "../models/sheet-one.model.js"
 
-// Create a new sheet one entry
 export const createSheetOneService = async (data, userId) => {
   try {
     const newEntry = new SheetOne({
@@ -14,7 +13,6 @@ export const createSheetOneService = async (data, userId) => {
   }
 }
 
-// Get all sheet one entries
 export const getAllSheetOnesService = async () => {
   try {
     return await SheetOne.find().sort({ createdAt: -1 })
@@ -23,7 +21,6 @@ export const getAllSheetOnesService = async () => {
   }
 }
 
-// Get a single sheet one entry
 export const getSheetOneService = async (id) => {
   try {
     const entry = await SheetOne.findById(id)
@@ -38,7 +35,6 @@ export const getSheetOneService = async (id) => {
   }
 }
 
-// Update a sheet one entry
 export const updateSheetOneService = async (id, data, userId, userRole) => {
   try {
     const entry = await SheetOne.findById(id)
@@ -47,7 +43,6 @@ export const updateSheetOneService = async (id, data, userId, userRole) => {
       throw new Error("Entry not found")
     }
 
-    // Check if user is authorized to update this entry
     if (entry.createdBy && entry.createdBy.toString() !== userId && userRole !== "admin") {
       throw new Error("You are not authorized to update this entry")
     }
@@ -58,7 +53,6 @@ export const updateSheetOneService = async (id, data, userId, userRole) => {
   }
 }
 
-// Delete a sheet one entry
 export const deleteSheetOneService = async (id, userId, userRole) => {
   try {
     const entry = await SheetOne.findById(id)
@@ -67,7 +61,6 @@ export const deleteSheetOneService = async (id, userId, userRole) => {
       throw new Error("Entry not found")
     }
 
-    // Check if user is authorized to delete this entry
     if (entry.createdBy && entry.createdBy.toString() !== userId && userRole !== "admin") {
       throw new Error("You are not authorized to delete this entry")
     }
