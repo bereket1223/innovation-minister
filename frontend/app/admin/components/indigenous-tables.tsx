@@ -6,11 +6,23 @@ import { useEffect, useState } from "react"
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
-import { Eye, Loader2, ChevronLeft, ChevronRight } from "lucide-react"
+import { Eye, Loader2, ChevronLeft, ChevronRight, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { toast } from "@/components/ui/use-toast"
 import { Sidebar } from "./Sidebar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface IndigenousData {
   _id: string
@@ -20,6 +32,7 @@ interface IndigenousData {
   subCategory: string
   fileUrl: string | null
   status: string
+  rejectionReason?: string
   createdAt: string
 }
 
@@ -42,6 +55,10 @@ const filterDataByTimePeriod = (data: IndigenousData[], period: string): Indigen
       startDate.setDate(1) // Start of month
       startDate.setHours(0, 0, 0, 0)
       break
+    case "month":
+      startDate.setDate(1) // Start of month
+      startDate.setHours(0, 0, 0, 0)
+      break
     case "year":
       startDate.setMonth(0, 1) // Start of year (Jan 1)
       startDate.setHours(0, 0, 0, 0)
@@ -56,19 +73,56 @@ const filterDataByTimePeriod = (data: IndigenousData[], period: string): Indigen
 function IndigenousTable({
   data,
   caption,
+  onRefresh,
 }: {
   data: IndigenousData[]
   caption: string
+  onRefresh: () => void
 }) {
   const [currentPage, setCurrentPage] = useState(1)
   const [timePeriod, setTimePeriod] = useState("all")
   const rowsPerPage = 10
   const [searchTerm, setSearchTerm] = useState("")
+  const [actionLoading, setActionLoading] = useState(false)
+  const [deleteItemId, setDeleteItemId] = useState<string | null>(null)
 
   // Handle search
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value)
     setCurrentPage(1) // Reset to first page when searching
+  }
+
+  // Handle delete
+  const handleDelete = async (id: string) => {
+    try {
+      setActionLoading(true)
+      setDeleteItemId(id)
+
+      const response = await fetch(`${API_BASE_URL}/department/delete/${id}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete: ${response.status} ${response.statusText}`)
+      }
+
+      toast({
+        title: "Success",
+        description: "Entry deleted successfully",
+      })
+
+      // Refresh the data after deletion
+      onRefresh()
+    } catch (err: any) {
+      toast({
+        title: "Error deleting entry",
+        description: err.message,
+        variant: "destructive",
+      })
+    } finally {
+      setActionLoading(false)
+      setDeleteItemId(null)
+    }
   }
 
   // Sort data by createdAt (most recent first)
@@ -179,6 +233,7 @@ function IndigenousTable({
               <TableHead>Sub Category</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Date</TableHead>
+              <TableHead>Rejection Reason</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -204,6 +259,26 @@ function IndigenousTable({
                   </TableCell>
                   <TableCell>{formatDate(item.createdAt)}</TableCell>
                   <TableCell>
+                    {item.status === "rejected" && item.rejectionReason ? (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="text-red-600 text-sm cursor-help truncate block max-w-[150px]">
+                              {item.rejectionReason.length > 20
+                                ? `${item.rejectionReason.substring(0, 20)}...`
+                                : item.rejectionReason}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs">{item.rejectionReason}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : (
+                      <span className="text-gray-400">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     <div className="flex space-x-2">
                       <Link href={`/indigenous-detail/${item._id}`}>
                         <Button variant="outline" size="sm">
@@ -211,13 +286,46 @@ function IndigenousTable({
                           Details
                         </Button>
                       </Link>
+
+                      {item.status === "rejected" && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm">
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Delete
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete this indigenous knowledge
+                                entry.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(item._id)}>
+                                {actionLoading && deleteItemId === item._id ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Processing...
+                                  </>
+                                ) : (
+                                  "Delete"
+                                )}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="text-center">
+                <TableCell colSpan={7} className="text-center">
                   No data available
                 </TableCell>
               </TableRow>
@@ -252,10 +360,16 @@ export function IndigenousTables() {
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
+
+  const refreshData = () => {
+    setRefreshTrigger((prev) => prev + 1)
+  }
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true)
         const departments = ["indigenous-innovation", "indigenous-research", "indigenous-technology"]
 
         const requests = departments.map(async (dept) => {
@@ -289,7 +403,7 @@ export function IndigenousTables() {
     }
 
     fetchData()
-  }, [])
+  }, [refreshTrigger])
 
   if (loading) {
     return (
@@ -339,15 +453,27 @@ export function IndigenousTables() {
               </TabsList>
 
               <TabsContent value="innovation">
-                <IndigenousTable data={data.innovation} caption="A list of indigenous innovations." />
+                <IndigenousTable
+                  data={data.innovation}
+                  caption="A list of indigenous innovations."
+                  onRefresh={refreshData}
+                />
               </TabsContent>
 
               <TabsContent value="research">
-                <IndigenousTable data={data.research} caption="A list of indigenous research." />
+                <IndigenousTable
+                  data={data.research}
+                  caption="A list of indigenous research."
+                  onRefresh={refreshData}
+                />
               </TabsContent>
 
               <TabsContent value="technology">
-                <IndigenousTable data={data.technology} caption="A list of indigenous technologies." />
+                <IndigenousTable
+                  data={data.technology}
+                  caption="A list of indigenous technologies."
+                  onRefresh={refreshData}
+                />
               </TabsContent>
             </Tabs>
           </div>

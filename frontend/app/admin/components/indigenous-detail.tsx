@@ -6,9 +6,20 @@ import { useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, FileText, Check, ArrowLeft, Trash2, ExternalLink, Download, Eye } from "lucide-react"
+import { Loader2, FileText, Check, ArrowLeft, ExternalLink, Download, Eye, Trash2 } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import { Sidebar } from "../../admin/components/Sidebar"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,7 +36,7 @@ interface IndigenousData {
   _id: string
   fullName: string
   gender: string
-  age: string
+  age: number
   nationality: string
   region: string
   zone: string
@@ -50,6 +61,7 @@ interface IndigenousData {
   documentPath: string
   agreement: boolean
   status: string
+  rejectionReason?: string
   createdAt: string
   updatedAt: string
 }
@@ -67,6 +79,8 @@ export function IndigenousDetail() {
   const [actionLoading, setActionLoading] = useState(false)
   const [showPdf, setShowPdf] = useState(false)
   const [pdfLoading, setPdfLoading] = useState(false)
+  const [rejectionReason, setRejectionReason] = useState("")
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
 
   useEffect(() => {
     if (id) {
@@ -147,6 +161,51 @@ export function IndigenousDetail() {
       setActionLoading(false)
       toast({
         title: "Error approving entry",
+        description: err.message,
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleReject = async () => {
+    if (!rejectionReason.trim()) {
+      toast({
+        title: "Error",
+        description: "Please provide a reason for rejection",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      setActionLoading(true)
+      const response = await fetch(`${API_BASE_URL}/department/reject/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ reason: rejectionReason }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to reject: ${response.status} ${response.statusText}`)
+      }
+
+      // Close the dialog
+      setRejectDialogOpen(false)
+
+      // Refresh the data after rejection
+      await fetchData()
+      setActionLoading(false)
+      toast({
+        title: "Success",
+        description: "Entry rejected successfully",
+      })
+    } catch (err: any) {
+      setError(err.message)
+      setActionLoading(false)
+      toast({
+        title: "Error rejecting entry",
         description: err.message,
         variant: "destructive",
       })
@@ -351,6 +410,12 @@ export function IndigenousDetail() {
                   <h3 className="font-medium text-gray-500">Last Updated</h3>
                   <p>{formatDate(data.updatedAt)}</p>
                 </div>
+                {data.status === "rejected" && data.rejectionReason && (
+                  <div>
+                    <h3 className="font-medium text-gray-500">Rejection Reason</h3>
+                    <p className="text-red-600">{data.rejectionReason}</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -465,42 +530,91 @@ export function IndigenousDetail() {
           )}
 
           {/* Action Buttons */}
-          <div className="mt-6 flex justify-between">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" disabled={actionLoading}>
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete this indigenous knowledge entry.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete}>
-                    {actionLoading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      "Delete"
-                    )}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-
+          <div className="mt-6 flex justify-end">
             <div className="space-x-2">
               <Button variant="outline" onClick={() => router.push("/indigenous-tables")}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Tables
               </Button>
+
+              {data.status === "rejected" && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive">
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete this indigenous knowledge entry.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDelete}>
+                        {actionLoading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          "Delete"
+                        )}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+
+              {data.status !== "rejected" && (
+                <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="destructive">Reject</Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Reject Entry</DialogTitle>
+                      <DialogDescription>
+                        Please provide a reason for rejecting this entry. This will be visible to the user.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="reason">Rejection Reason</Label>
+                        <Textarea
+                          id="reason"
+                          placeholder="Enter reason for rejection..."
+                          value={rejectionReason}
+                          onChange={(e) => setRejectionReason(e.target.value)}
+                          className="min-h-[100px]"
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setRejectDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={handleReject}
+                        disabled={actionLoading || !rejectionReason.trim()}
+                      >
+                        {actionLoading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          "Reject"
+                        )}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              )}
 
               {data.status !== "approved" && (
                 <Button

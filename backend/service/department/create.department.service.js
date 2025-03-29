@@ -90,3 +90,20 @@ export const approveDepartment = async (id) => {
   }
 }
 
+
+export const rejectDepartment = async (id, reason) => {
+  try {
+    const department = await Department.findByIdAndUpdate(
+      id,
+      {
+        status: "rejected",
+        rejectionReason: reason,
+      },
+      { new: true },
+    )
+    return department
+  } catch (error) {
+    throw new ApiError(500, "Error rejecting department")
+  }
+}
+

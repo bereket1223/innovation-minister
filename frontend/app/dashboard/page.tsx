@@ -27,7 +27,6 @@ import {
 import Sidebar from "../components/Sidebar"
 import ProfileDropdown from "../components/ProfileDropdown"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Input } from "@/components/ui/input"
 import { toast } from "react-hot-toast"
 
 interface KnowledgeEntry {
@@ -35,9 +34,10 @@ interface KnowledgeEntry {
   fullName: string
   phoneNumber: string
   knowledgeTitle: string
-  knowledgeDepartment: string // Added knowledgeDepartment field
+  knowledgeDepartment: string
   subCategory: string
   status: string
+  rejectionReason?: string
   createdAt: string
 }
 
@@ -134,11 +134,12 @@ export default function Dashboard() {
       const formattedData = userDepartments.map((item: any) => ({
         id: item._id || item.id || "",
         fullName: item.fullName || "",
-        phoneNumber: item.phoneNumber || item.phone || "", // Check both fields
+        phoneNumber: item.phoneNumber || item.phone || "",
         knowledgeTitle: item.knowledgeTitle || "",
-        knowledgeDepartment: item.knowledgeDepartment || item.department || "", // Added knowledgeDepartment field
+        knowledgeDepartment: item.knowledgeDepartment || item.department || "",
         subCategory: item.subCategory || "",
         status: item.status || "Pending",
+        rejectionReason: item.rejectionReason || "",
         createdAt: item.createdAt || new Date().toISOString(),
       }))
 
@@ -256,10 +257,11 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent className="p-4">
                 <Tabs defaultValue="all" className="mb-4" onValueChange={setActiveTab}>
-                  <TabsList className="grid grid-cols-3 mb-4">
+                  <TabsList className="grid grid-cols-4 mb-4">
                     <TabsTrigger value="all">All</TabsTrigger>
                     <TabsTrigger value="approved">Approved</TabsTrigger>
                     <TabsTrigger value="pending">Pending</TabsTrigger>
+                    <TabsTrigger value="rejected">Rejected</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="all" className="mt-0">
@@ -278,6 +280,9 @@ export default function Dashboard() {
                             <TableHead>Sub-Category</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Date</TableHead>
+                            {activeTab === "rejected" || activeTab === "all" ? (
+                              <TableHead>Rejection Reason</TableHead>
+                            ) : null}
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -294,13 +299,24 @@ export default function Dashboard() {
                                     className={`${
                                       entry.status.toLowerCase() === "approved"
                                         ? "bg-blue-100 text-blue-800"
-                                        : "bg-amber-100 text-amber-800"
+                                        : entry.status.toLowerCase() === "rejected"
+                                          ? "bg-red-100 text-red-800"
+                                          : "bg-amber-100 text-amber-800"
                                     }`}
                                   >
                                     {entry.status}
                                   </Badge>
                                 </TableCell>
                                 <TableCell>{formatDate(entry.createdAt)}</TableCell>
+                                {(activeTab === "rejected" || activeTab === "all") && (
+                                  <TableCell>
+                                    {entry.status.toLowerCase() === "rejected" && entry.rejectionReason ? (
+                                      <span className="text-red-600 text-sm">{entry.rejectionReason}</span>
+                                    ) : entry.status.toLowerCase() === "rejected" ? (
+                                      <span className="text-gray-400">No reason provided</span>
+                                    ) : null}
+                                  </TableCell>
+                                )}
                               </TableRow>
                             ))
                           ) : (
@@ -316,7 +332,7 @@ export default function Dashboard() {
                   </TabsContent>
 
                   {/* Filter tabs by status */}
-                  {["approved", "pending"].map((status) => (
+                  {["approved", "pending", "rejected"].map((status) => (
                     <TabsContent key={status} value={status} className="mt-0">
                       {isLoading ? (
                         <div className="flex justify-center py-8">
@@ -333,6 +349,7 @@ export default function Dashboard() {
                               <TableHead>Sub-Category</TableHead>
                               <TableHead>Status</TableHead>
                               <TableHead>Date</TableHead>
+                              {status === "rejected" && <TableHead>Rejection Reason</TableHead>}
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -350,13 +367,24 @@ export default function Dashboard() {
                                       className={`${
                                         entry.status.toLowerCase() === "approved"
                                           ? "bg-blue-100 text-blue-800"
-                                          : "bg-amber-100 text-amber-800"
+                                          : entry.status.toLowerCase() === "rejected"
+                                            ? "bg-red-100 text-red-800"
+                                            : "bg-amber-100 text-amber-800"
                                       }`}
                                     >
                                       {entry.status}
                                     </Badge>
                                   </TableCell>
                                   <TableCell>{formatDate(entry.createdAt)}</TableCell>
+                                  {status === "rejected" && (
+                                    <TableCell>
+                                      {entry.rejectionReason ? (
+                                        <span className="text-red-600 text-sm">{entry.rejectionReason}</span>
+                                      ) : (
+                                        <span className="text-gray-400">No reason provided</span>
+                                      )}
+                                    </TableCell>
+                                  )}
                                 </TableRow>
                               ))}
                             {filteredKnowledgeData.filter((entry) => entry.status.toLowerCase() === status).length ===

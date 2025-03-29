@@ -6,6 +6,7 @@ import {
   getDepartmentsByTypeController,
   deleteDepartmentController,
   approveDepartmentController,
+  rejectDepartmentController,
 } from "../controllers/department/create.department.controller.js"
 import { upload, handleMulterError } from "../middleware/multer.middleware.js"
 
@@ -18,6 +19,8 @@ router.get("/type/:type", getDepartmentsByTypeController)
 router.delete("/delete/:id", deleteDepartmentController)
 
 router.put("/approve/:id", approveDepartmentController)
+
+router.put("/reject/:id", rejectDepartmentController)
 
 router.get("/:id", getDepartmentByIdController)
 

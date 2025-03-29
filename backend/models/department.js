@@ -5,47 +5,37 @@ const departmentSchema = new mongoose.Schema(
     // Personal Information
     fullName: {
       type: String,
-      
       trim: true,
     },
     gender: {
       type: String,
-      
       enum: ["male", "female"],
     },
     age: {
       type: Number,
-      
     },
     nationality: {
       type: String,
-      
     },
     region: {
       type: String,
-      
     },
     zone: {
       type: String,
-      
     },
     woreda: {
       type: String,
-      
     },
     kebele: {
       type: String,
-      
     },
     email: {
       type: String,
-      
       trim: true,
       lowercase: true,
     },
     phoneNumber: {
       type: String,
-      
     },
 
     // Affiliation Details (Optional)
@@ -86,17 +76,14 @@ const departmentSchema = new mongoose.Schema(
     // Indigenous Knowledge Information
     knowledgeTitle: {
       type: String,
-      
       trim: true,
     },
     knowledgeDepartment: {
       type: String,
-      
       enum: ["Indigenous Research", "Indigenous Technology", "Indigenous Innovation"],
     },
     subCategory: {
       type: String,
-      
       trim: true,
     },
     otherSubCategory: {
@@ -105,23 +92,19 @@ const departmentSchema = new mongoose.Schema(
     },
     interestAreas: {
       type: String,
-      
       trim: true,
     },
 
     documentPath: {
       type: String,
-      
     },
     fileUrl: {
       type: String,
-      
     },
 
     // Agreement
     agreement: {
       type: Boolean,
-      
       default: false,
     },
 
@@ -130,6 +113,12 @@ const departmentSchema = new mongoose.Schema(
       type: String,
       enum: ["pending", "approved", "rejected"],
       default: "pending",
+    },
+
+    // Rejection Reason
+    rejectionReason: {
+      type: String,
+      default: "",
     },
   },
   { timestamps: true },
